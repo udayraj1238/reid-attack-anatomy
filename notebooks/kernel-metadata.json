@@ -1,9 +1,9 @@
 {
   "id": "udayraj1238/reid-attack-anatomy-runner",
   "title": "ReID Attack Anatomy Runner",
-  "code_file": "kaggle_phase1.ipynb",
+  "code_file": "kaggle_runner.py",
   "language": "python",
-  "kernel_type": "notebook",
+  "kernel_type": "script",
   "is_private": "true",
   "enable_gpu": "true",
   "enable_tpu": "false",
