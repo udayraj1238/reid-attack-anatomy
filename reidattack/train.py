@@ -3,14 +3,15 @@ from .data import get_market
 from .models import ReIDNet
 from .losses import ReIDLoss
 from .evaluate import extract, cmc_map
+from .logger import log, setup_logging
 
 
 def evaluate(model, q_dl, g_dl, device):
-    print(f"  [eval] Extracting query embeddings ({len(q_dl)} batches)...", flush=True)
+    log(f"  [eval] Extracting query embeddings ({len(q_dl)} batches)...")
     qf, qp, qc = extract(model, q_dl, device)
-    print(f"  [eval] Extracting gallery embeddings ({len(g_dl)} batches)...", flush=True)
+    log(f"  [eval] Extracting gallery embeddings ({len(g_dl)} batches)...")
     gf, gp, gc = extract(model, g_dl, device)
-    print(f"  [eval] Computing CMC curve and mAP for {len(qf)} queries against {len(gf)} gallery images...", flush=True)
+    log(f"  [eval] Computing CMC curve and mAP for {len(qf)} queries against {len(gf)} gallery images...")
     cmc, mAP = cmc_map(qf, gf, qp, gp, qc, gc)
     return cmc, mAP
 
@@ -28,23 +29,25 @@ def main():
     ap.add_argument("--skip_if_exists", action="store_true", help="Skip if final checkpoint already exists")
     a = ap.parse_args()
 
+    setup_logging(f"train_{a.arch}")
+
     target_ckpt = os.path.join(a.out, f"{a.arch}.pth")
     if a.skip_if_exists and os.path.exists(target_ckpt):
-        print(f"=== Checkpoint {target_ckpt} already exists! Skipping training. ===", flush=True)
+        log(f"=== Checkpoint {target_ckpt} already exists! Skipping training. ===")
         return
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     os.makedirs(a.out, exist_ok=True)
 
-    print(f"\n=======================================================", flush=True)
-    print(f"Starting Training: {a.arch.upper()} on {dev.upper()}", flush=True)
-    print(f"Dataset: {a.data} | Epochs: {a.epochs} | Base LR: {a.lr}", flush=True)
-    print(f"=======================================================", flush=True)
+    log(f"\n=======================================================")
+    log(f"Starting Training: {a.arch.upper()} on {dev.upper()}")
+    log(f"Dataset: {a.data} | Epochs: {a.epochs} | Base LR: {a.lr}")
+    log(f"=======================================================")
 
     t_start = time.time()
     train_dl, q_dl, g_dl, ncls = get_market(a.data, workers=a.workers)
     n_batches = len(train_dl)
-    print(f"Loaded Market-1501: {ncls} identities, {n_batches} train batches, {len(q_dl)} query batches, {len(g_dl)} gallery batches", flush=True)
+    log(f"Loaded Market-1501: {ncls} identities, {n_batches} train batches, {len(q_dl)} query batches, {len(g_dl)} gallery batches")
 
     model = ReIDNet(a.arch, ncls).to(dev)
     crit = ReIDLoss()
@@ -63,7 +66,7 @@ def main():
         for g in opt.param_groups:
             g["lr"] = current_lr
 
-        print(f"\n--- Epoch {ep+1}/{a.epochs} (lr={current_lr:.2e}) ---", flush=True)
+        log(f"\n--- Epoch {ep+1}/{a.epochs} (lr={current_lr:.2e}) ---")
 
         for bi, (x, y, _) in enumerate(train_dl):
             x, y = x.to(dev), y.to(dev)
@@ -81,10 +84,10 @@ def main():
                 avg_loss = tot / (bi + 1)
                 elapsed = time.time() - t0
                 eta = (elapsed / (bi + 1)) * (n_batches - (bi + 1))
-                print(f"  [ep {ep+1:2d}/{a.epochs:2d} | batch {bi+1:3d}/{n_batches} ({pct:3.0f}%)] loss: {avg_loss:.4f} | elapsed: {elapsed:.1f}s | eta: {eta:.1f}s", flush=True)
+                log(f"  [ep {ep+1:2d}/{a.epochs:2d} | batch {bi+1:3d}/{n_batches} ({pct:3.0f}%)] loss: {avg_loss:.4f} | elapsed: {elapsed:.1f}s | eta: {eta:.1f}s")
 
         epoch_time = time.time() - t0
-        print(f"Epoch {ep+1}/{a.epochs} complete in {epoch_time:.1f}s | Avg Loss: {tot/n_batches:.4f}", flush=True)
+        log(f"Epoch {ep+1}/{a.epochs} complete in {epoch_time:.1f}s | Avg Loss: {tot/n_batches:.4f}")
 
         # Save latest checkpoint after every epoch to protect compute progress
         torch.save({"arch": a.arch, "ncls": ncls, "epoch": ep + 1, "state": model.state_dict()},
@@ -93,18 +96,18 @@ def main():
         if (ep + 1) % a.eval_every == 0 or ep + 1 == a.epochs:
             cmc, mAP = evaluate(model, q_dl, g_dl, dev)
             r1 = cmc[0]
-            print(f"  >> [EVAL] Clean Rank-1: {r1*100:.2f}% | Rank-5: {cmc[4]*100:.2f}% | mAP: {mAP*100:.2f}%", flush=True)
+            log(f"  >> [EVAL] Clean Rank-1: {r1*100:.2f}% | Rank-5: {cmc[4]*100:.2f}% | mAP: {mAP*100:.2f}%")
             if mAP >= best_map:
                 best_map = mAP
                 torch.save({"arch": a.arch, "ncls": ncls, "epoch": ep + 1, "mAP": mAP, "rank1": r1, "state": model.state_dict()},
                            target_ckpt)
-                print(f"  >> [BEST] New best model saved to {target_ckpt} (mAP: {best_map*100:.2f}%)", flush=True)
+                log(f"  >> [BEST] New best model saved to {target_ckpt} (mAP: {best_map*100:.2f}%)")
 
     total_time = time.time() - t_start
-    print(f"\n=======================================================", flush=True)
-    print(f"Training Complete for {a.arch.upper()} in {total_time/60:.1f} mins | Best mAP: {best_map*100:.2f}%", flush=True)
-    print(f"Checkpoint saved to {target_ckpt}", flush=True)
-    print(f"=======================================================\n", flush=True)
+    log(f"\n=======================================================")
+    log(f"Training Complete for {a.arch.upper()} in {total_time/60:.1f} mins | Best mAP: {best_map*100:.2f}%")
+    log(f"Checkpoint saved to {target_ckpt}")
+    log(f"=======================================================\n")
 
 
 if __name__ == "__main__":
