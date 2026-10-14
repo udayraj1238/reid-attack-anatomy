@@ -3,6 +3,7 @@ Polls status and logs so you always know exactly what is happening without guess
 
 Usage:
     python scripts/monitor_kaggle.py
+    python scripts/monitor_kaggle.py --status_only
     python scripts/monitor_kaggle.py --interval 15 --download_on_finish
 """
 import argparse
@@ -24,6 +25,15 @@ def check_status(kernel_slug):
         return "ERROR_API", str(e)
 
 
+def get_logs(kernel_slug):
+    try:
+        import kaggle
+        res = kaggle.api.kernels_logs(kernel_slug)
+        return str(res) if res else ""
+    except Exception:
+        return ""
+
+
 def download_outputs(kernel_slug, out_dir="kaggle_outputs"):
     os.makedirs(out_dir, exist_ok=True)
     print(f"\n[Monitor] Downloading kernel output artifacts to ./{out_dir}...", flush=True)
@@ -39,7 +49,13 @@ def main():
     parser.add_argument("--kernel", default="udayraj1238/reid-attack-anatomy-runner", help="Kernel slug")
     parser.add_argument("--interval", type=int, default=15, help="Poll interval in seconds")
     parser.add_argument("--download_on_finish", action="store_true", help="Automatically download outputs when complete")
+    parser.add_argument("--status_only", action="store_true", help="Check status once and exit")
     args = parser.parse_args()
+
+    if args.status_only:
+        status, msg = check_status(args.kernel)
+        print(f"Status: {status} | Failure Message: {msg or 'None'}")
+        return
 
     print("\n" + "=" * 65)
     print(f"Kaggle Kernel Monitor: {args.kernel}")
@@ -47,7 +63,7 @@ def main():
     print("=" * 65 + "\n")
 
     start_time = time.time()
-    last_status = None
+    last_log_len = 0
 
     try:
         while True:
@@ -58,19 +74,26 @@ def main():
 
             status, msg = check_status(args.kernel)
 
-            status_color = status
-            if status == "RUNNING":
+            if "RUNNING" in status:
                 badge = "[RUNNING]"
-            elif status in ("COMPLETE", "COMPLETED"):
+            elif "COMPLETE" in status:
                 badge = "[COMPLETED]"
-            elif "ERROR" in status or "FAIL" in status:
+            elif "FAIL" in status or "ERROR" in status:
                 badge = "[FAILED]"
             else:
                 badge = f"[{status}]"
 
             print(f"[{now_str}] {badge:14s} | Elapsed: {elapsed_str} | Kernel: {args.kernel}", flush=True)
 
-            if status in ("COMPLETE", "COMPLETED"):
+            # Check for live logs in script mode
+            logs = get_logs(args.kernel)
+            if logs and len(logs) > last_log_len:
+                new_logs = logs[last_log_len:].strip()
+                if new_logs:
+                    print(f"\n--- [Live Cloud Logs] ---\n{new_logs}\n------------------------\n", flush=True)
+                last_log_len = len(logs)
+
+            if "COMPLETE" in status:
                 print(f"\n🎉 Kernel execution completed successfully after {elapsed_str}!", flush=True)
                 if args.download_on_finish:
                     download_outputs(args.kernel)
