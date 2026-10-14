@@ -33,11 +33,20 @@ def main():
     ap.add_argument("--lr", type=float, default=3.5e-4)
     ap.add_argument("--out", default="checkpoints")
     ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--eval_every", type=int, default=5)
+    ap.add_argument("--log_every", type=int, default=15, help="Batch logging interval")
+    ap.add_argument("--skip_if_exists", action="store_true", help="Skip if final checkpoint already exists")
     a = ap.parse_args()
+
+    target_ckpt = os.path.join(a.out, f"{a.arch}_adv_trained_eps{a.eps}.pth")
+    if a.skip_if_exists and os.path.exists(target_ckpt):
+        print(f"=== Adversarial Checkpoint {target_ckpt} already exists! Skipping. ===", flush=True)
+        return
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     os.makedirs(a.out, exist_ok=True)
     train_dl, q_dl, g_dl, ncls = get_market(a.data, workers=a.workers)
+    n_batches = len(train_dl)
 
     model = ReIDNet(a.arch, ncls).to(dev)
     crit = ReIDLoss()
@@ -46,7 +55,13 @@ def main():
     scaler = torch.amp.GradScaler("cuda", enabled=dev == "cuda")
     eps_val = a.eps / 255.0
 
-    print(f"=== Starting Adversarial Training for {a.arch.upper()} (ε={a.eps}/255, PGD-{a.pgd_steps}) ===")
+    print(f"\n=======================================================", flush=True)
+    print(f"Starting Adversarial Training: {a.arch.upper()} on {dev.upper()}", flush=True)
+    print(f"ε={a.eps}/255 ({eps_val:.4f}) | PGD-{a.pgd_steps} | Epochs: {a.epochs} | Train Batches: {n_batches}", flush=True)
+    print(f"=======================================================\n", flush=True)
+
+    t_start = time.time()
+    best_map = 0.0
 
     for ep in range(a.epochs):
         model.train()
@@ -54,10 +69,13 @@ def main():
         tot_clean, tot_adv = 0.0, 0.0
 
         warm = min(1.0, (ep + 1) / 5)
+        current_lr = a.lr * warm * (0.1 ** sum(ep >= m for m in milestones))
         for g in opt.param_groups:
-            g["lr"] = a.lr * warm * (0.1 ** sum(ep >= m for m in milestones))
+            g["lr"] = current_lr
 
-        for x, y, _ in train_dl:
+        print(f"--- Adv Epoch {ep+1}/{a.epochs} (lr={current_lr:.2e}) ---", flush=True)
+
+        for bi, (x, y, _) in enumerate(train_dl):
             x, y = x.to(dev), y.to(dev)
 
             # 1. Craft adversarial perturbation on current batch
@@ -87,18 +105,34 @@ def main():
             tot_clean += loss_clean.item()
             tot_adv += loss_adv.item()
 
-        n_batches = len(train_dl)
-        print(f"Epoch {ep+1}/{a.epochs} | Clean Loss: {tot_clean/n_batches:.3f} | Adv Loss: {tot_adv/n_batches:.3f} ({time.time()-t0:.0f}s)", flush=True)
+            if (bi + 1) % a.log_every == 0 or (bi + 1) == n_batches:
+                pct = 100.0 * (bi + 1) / n_batches
+                elapsed = time.time() - t0
+                eta = (elapsed / (bi + 1)) * (n_batches - (bi + 1))
+                print(f"  [adv ep {ep+1:2d}/{a.epochs:2d} | batch {bi+1:3d}/{n_batches} ({pct:3.0f}%)] clean_loss: {tot_clean/(bi+1):.3f} | adv_loss: {tot_adv/(bi+1):.3f} | {elapsed:.1f}s | eta: {eta:.1f}s", flush=True)
 
-        if (ep + 1) % 5 == 0 or ep + 1 == a.epochs:
+        epoch_time = time.time() - t0
+        print(f"Adv Epoch {ep+1}/{a.epochs} complete in {epoch_time:.1f}s | Clean Loss: {tot_clean/n_batches:.3f} | Adv Loss: {tot_adv/n_batches:.3f}", flush=True)
+
+        # Save latest adv checkpoint every epoch
+        torch.save(
+            {"arch": a.arch, "ncls": ncls, "epoch": ep + 1, "state": model.state_dict(), "adv_trained": True, "eps": a.eps},
+            os.path.join(a.out, f"{a.arch}_adv_latest.pth")
+        )
+
+        if (ep + 1) % a.eval_every == 0 or ep + 1 == a.epochs:
+            print(f"  [eval] Evaluating robust model on test set...", flush=True)
             r1, mAP = evaluate(model, q_dl, g_dl, dev)
-            print(f"  >> [Robust Check] Clean Rank-1: {r1*100:.1f}%, mAP: {mAP*100:.1f}%", flush=True)
+            print(f"  >> [Robust Check] Clean Rank-1: {r1*100:.2f}%, mAP: {mAP*100:.2f}%", flush=True)
             torch.save(
-                {"arch": a.arch, "ncls": ncls, "state": model.state_dict(), "adv_trained": True, "eps": a.eps},
-                os.path.join(a.out, f"{a.arch}_adv_trained_eps{a.eps}.pth")
+                {"arch": a.arch, "ncls": ncls, "epoch": ep + 1, "state": model.state_dict(), "adv_trained": True, "eps": a.eps, "mAP": mAP, "rank1": r1},
+                target_ckpt
             )
 
-    print(f"Adversarial training complete! Model saved to checkpoints/{a.arch}_adv_trained_eps{a.eps}.pth")
+    total_time = time.time() - t_start
+    print(f"\n=======================================================", flush=True)
+    print(f"Adversarial training complete in {total_time/60:.1f} mins! Saved to {target_ckpt}", flush=True)
+    print(f"=======================================================\n", flush=True)
 
 
 if __name__ == "__main__":

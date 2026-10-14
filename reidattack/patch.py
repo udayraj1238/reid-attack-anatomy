@@ -61,14 +61,19 @@ def total_variation(p):
 
 
 def train_patch(model, loader, epochs=5, lr=0.05, tv=0.1, device="cuda", ph=64, pw=48, log=print):
+    import time
     model.eval()
     for p in model.parameters():
         p.requires_grad_(False)
     patcher = UniversalPatch(ph, pw).to(device)
     opt = torch.optim.Adam(patcher.parameters(), lr=lr)
+    n_batches = len(loader)
+    log(f"Starting Universal Patch Training: {epochs} epochs, {n_batches} batches/epoch, TV weight={tv}")
+
     for ep in range(epochs):
         tot, n = 0.0, 0
-        for x, _, _ in loader:
+        t0 = time.time()
+        for bi, (x, _, _) in enumerate(loader):
             x = x.to(device)
             with torch.no_grad():
                 clean = model.embed(x)
@@ -77,6 +82,14 @@ def train_patch(model, loader, epochs=5, lr=0.05, tv=0.1, device="cuda", ph=64, 
             opt.zero_grad()
             loss.backward()
             opt.step()
-            tot += sim.item() * len(x); n += len(x)
-        log(f"[patch] epoch {ep+1}/{epochs}  mean cosine sim to clean = {tot/n:.3f}  (lower = stronger)")
+            tot += sim.item() * len(x)
+            n += len(x)
+
+            if (bi + 1) % 25 == 0 or (bi + 1) == n_batches:
+                pct = 100.0 * (bi + 1) / n_batches
+                elapsed = time.time() - t0
+                log(f"  [patch ep {ep+1:2d}/{epochs} | batch {bi+1:3d}/{n_batches} ({pct:3.0f}%)] mean sim: {tot/n:.3f} | {elapsed:.1f}s")
+
+        epoch_time = time.time() - t0
+        log(f"[patch] Epoch {ep+1}/{epochs} complete in {epoch_time:.1f}s | Mean Cosine Sim: {tot/n:.3f} (lower = stronger attack)\n")
     return patcher

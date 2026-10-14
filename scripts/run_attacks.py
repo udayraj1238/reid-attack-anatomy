@@ -66,49 +66,110 @@ def main():
             row["impersonation_hit@1"] = round(float((top == tpids).mean()) * 100, 2)
         return row
 
-    rows, examples = [], {}
-    # clean baseline
-    for tgt in names:
-        feats = [models[tgt].embed(x.to(dev)).detach().cpu() for x, _, _ in batches]
-        rows.append({"attack": "clean", "eps": 0, "source": "-", "target": tgt, **score(feats, tgt)})
+    out = a.out.format(mode=a.mode)
+    os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
 
+    # Check for existing results to resume if possible
+    rows = []
+    examples = {}
+    done_keys = set()
+    if os.path.exists(out):
+        try:
+            with open(out, "r") as f:
+                rows = json.load(f)
+            for r in rows:
+                done_keys.add((r.get("attack"), r.get("eps"), r.get("source"), r.get("target")))
+            print(f"Loaded {len(rows)} previously computed results from {out} for resuming.", flush=True)
+        except Exception:
+            rows = []
+
+    # Clean baseline
+    print(f"\n=======================================================", flush=True)
+    print(f"Computing Clean Baseline Retrieval Metrics for {len(names)} Models", flush=True)
+    print(f"=======================================================", flush=True)
+    for tgt in names:
+        if ("clean", 0, "-", tgt) not in done_keys:
+            feats = [models[tgt].embed(x.to(dev)).detach().cpu() for x, _, _ in batches]
+            r = {"attack": "clean", "eps": 0, "source": "-", "target": tgt, **score(feats, tgt)}
+            rows.append(r)
+            done_keys.add(("clean", 0, "-", tgt))
+            print(f"  [Clean Baseline] Model: {tgt:12s} | Rank-1: {r['rank1']:5.2f}% | mAP: {r['mAP']:5.2f}%", flush=True)
+        else:
+            print(f"  [Clean Baseline] Model: {tgt:12s} | Already cached in {out}", flush=True)
+
+    with open(out, "w") as f:
+        json.dump(rows, f, indent=1)
+
+    # Compute total configurations
+    configs = []
     for atk in a.attacks:
         for eps in a.eps:
             for src in names:
-                feats = {t: [] for t in names}
-                off = 0
-                for bi, (x, _, _) in enumerate(batches):
-                    x = x.to(dev); B = len(x); sm = models[src]
-                    with torch.no_grad():
-                        clean = sm.embed(x)
-                    if atk == "logit_pgd":          # classification-style baseline (pseudo-label = own prediction)
-                        with torch.no_grad():
-                            lab = sm.logits(x).argmax(1)
-                        obj = logit_objective(sm, lab)
-                        xa = pgd(obj, x, eps / 255, a.steps)
-                    else:
-                        if a.mode == "evade":
-                            obj = evade_objective(sm, clean)
-                        else:
-                            tf = torch.stack([centroids[src][int(p)] for p in t_pids[off:off + B]]).to(dev)
-                            obj = impersonate_objective(sm, tf)
-                        xa = ATTACKS[atk](obj, x, eps / 255, a.steps)
-                    assert (xa - x).abs().max() <= eps / 255 + 1e-5
-                    if bi == 0 and src == names[0]:
-                        examples[f"{atk}_eps{eps}"] = {"clean": x[:8].cpu(), "adv": xa[:8].cpu()}
-                    with torch.no_grad():
-                        for t in names:
-                            feats[t].append(models[t].embed(xa).cpu())
-                    off += B
+                configs.append((atk, eps, src))
+
+    total_cfgs = len(configs)
+    print(f"\n=======================================================", flush=True)
+    print(f"Running Attack Suite ({a.mode.upper()})", flush=True)
+    print(f"Total Configurations: {total_cfgs} | Batches per config: {len(batches)}", flush=True)
+    print(f"=======================================================\n", flush=True)
+
+    for cfg_idx, (atk, eps, src) in enumerate(configs, 1):
+        # Check if all targets for this config are already done
+        all_done = all((atk, eps, src, t) in done_keys for t in names)
+        if all_done:
+            print(f"[{cfg_idx:2d}/{total_cfgs}] {atk.upper()} (eps={eps}) from {src} -> Already cached, skipping.", flush=True)
+            continue
+
+        print(f"\n---> [{cfg_idx:2d}/{total_cfgs}] Crafting {atk.upper()} (eps={eps}/255) on Source: {src}", flush=True)
+        t_cfg_start = time.time()
+        feats = {t: [] for t in names}
+        off = 0
+
+        for bi, (x, _, _) in enumerate(batches):
+            x = x.to(dev); B = len(x); sm = models[src]
+            with torch.no_grad():
+                clean = sm.embed(x)
+            if atk == "logit_pgd":          # classification-style baseline (pseudo-label = own prediction)
+                with torch.no_grad():
+                    lab = sm.logits(x).argmax(1)
+                obj = logit_objective(sm, lab)
+                xa = pgd(obj, x, eps / 255, a.steps)
+            else:
+                if a.mode == "evade":
+                    obj = evade_objective(sm, clean)
+                else:
+                    tf = torch.stack([centroids[src][int(p)] for p in t_pids[off:off + B]]).to(dev)
+                    obj = impersonate_objective(sm, tf)
+                xa = ATTACKS[atk](obj, x, eps / 255, a.steps)
+            assert (xa - x).abs().max() <= eps / 255 + 1e-5
+            if bi == 0 and src == names[0]:
+                examples[f"{atk}_eps{eps}"] = {"clean": x[:8].cpu(), "adv": xa[:8].cpu()}
+            with torch.no_grad():
                 for t in names:
-                    tp = t_pids if (a.mode == "impersonate" and atk != "logit_pgd") else None
-                    r = {"attack": atk, "eps": eps, "source": src, "target": t, **score(feats[t], t, tp)}
-                    rows.append(r); print(r, flush=True)
-    out = a.out.format(mode=a.mode)
-    os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
-    json.dump(rows, open(out, "w"), indent=1)
+                    feats[t].append(models[t].embed(xa).cpu())
+            off += B
+
+            if (bi + 1) % 10 == 0 or (bi + 1) == len(batches):
+                pct = 100.0 * (bi + 1) / len(batches)
+                elapsed = time.time() - t_cfg_start
+                print(f"     [batch {bi+1:2d}/{len(batches)} ({pct:3.0f}%)] crafted & projected in {elapsed:.1f}s", flush=True)
+
+        # Score across all victim models
+        print(f"     Evaluating cross-architecture transfer across {len(names)} targets:", flush=True)
+        for t in names:
+            tp = t_pids if (a.mode == "impersonate" and atk != "logit_pgd") else None
+            r = {"attack": atk, "eps": eps, "source": src, "target": t, **score(feats[t], t, tp)}
+            rows.append(r)
+            done_keys.add((atk, eps, src, t))
+            imp_str = f" | Impersonate Hit@1: {r.get('impersonation_hit@1', 0):.1f}%" if tp is not None else ""
+            print(f"       >> Target: {t:12s} | Rank-1: {r['rank1']:5.2f}% | mAP: {r['mAP']:5.2f}%{imp_str}", flush=True)
+
+        # Save incrementally after each configuration completes
+        with open(out, "w") as f:
+            json.dump(rows, f, indent=1)
+
     torch.save(examples, out.replace(".json", "_examples.pt"))
-    print("saved", out)
+    print(f"\nSaved all results ({len(rows)} evaluations) to {out}", flush=True)
 
 
 if __name__ == "__main__":

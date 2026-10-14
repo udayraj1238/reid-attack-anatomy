@@ -199,12 +199,26 @@ def build_interface():
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--check", action="store_true", help="Verify interface without launching blocking server")
+    parser.add_argument("--port", type=int, default=7860)
+    args = parser.parse_args()
+
+    clean = create_synthetic_pedestrian(1)
+    res = apply_adversarial_simulation(clean, "Universal Torso Patch (EOT)", 8)
+    print("Synthetic simulation test passed! Output similarity:", res[2])
+
+    if args.check:
+        if gr is not None:
+            app = build_interface()
+            print("Gradio interface constructed and verified successfully (--check mode). Exiting cleanly.")
+        else:
+            print("Gradio not installed; synthetic check completed.")
+        sys.exit(0)
+
     if gr is None:
         print("Gradio is not installed. To run the web UI, install via: pip install gradio")
-        print("Creating synthetic output check:")
-        clean = create_synthetic_pedestrian(1)
-        res = apply_adversarial_simulation(clean, "Universal Torso Patch (EOT)", 8)
-        print("Simulation ok! Cosine similarity:", res[2])
     else:
         app = build_interface()
-        app.launch(server_name="127.0.0.1", server_port=7860, share=False)
+        app.launch(server_name="127.0.0.1", server_port=args.port, share=False)

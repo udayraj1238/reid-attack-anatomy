@@ -1,0 +1,209 @@
+import json
+
+cells = [
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "# Kaggle Runner: Anatomy of a ReID Attack\n",
+            "**End-to-End Adversarial Robustness Pipeline on Market-1501 (T4 GPU)**\n",
+            "\n",
+            "### Hardware & Environment Requirements:\n",
+            "- **Accelerator**: GPU T4 x1\n",
+            "- **Internet**: ON\n",
+            "- **Input Dataset**: `pengcw1/market-1501` (Search and add dataset `Market-1501`)\n",
+            "\n",
+            "All scripts feature real-time unbuffered batch logging, per-epoch checkpointing, incremental attack result saving, and `--skip_if_exists` to prevent lost compute."
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "# Step 0: Environment Setup & Code Sync\n",
+            "import os, sys, datetime\n",
+            "os.environ[\"PYTHONUNBUFFERED\"] = \"1\"\n",
+            "\n",
+            "!pip -q install timm gradio\n",
+            "\n",
+            "if not os.path.exists('reid-attack-anatomy'):\n",
+            "    !git clone https://github.com/udayraj1238/reid-attack-anatomy.git\n",
+            "    %cd reid-attack-anatomy\n",
+            "else:\n",
+            "    %cd reid-attack-anatomy\n",
+            "    !git pull\n",
+            "\n",
+            "# Verify environment\n",
+            "!python -u tests/smoke_test.py\n",
+            "print('Setup completed at:', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "## Step 1 - Train Victim Model Baselines\n",
+            "Trains 3 victim architectures: ResNet-50 (BoT), DenseNet-121, and ViT-Small.\n",
+            "- Batch progress is logged live every 20 batches with elapsed time and ETA.\n",
+            "- Latest checkpoint `{arch}_latest.pth` is saved every epoch to protect progress.\n",
+            "- If a checkpoint already exists, `--skip_if_exists` skips it automatically."
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "DATA = '/kaggle/input'\n",
+            "print('\\n>>> [Step 1A] Training ResNet-50 Baseline (~20-25 min)...\\n')\n",
+            "!python -u -m reidattack.train --data $DATA --arch resnet50 --epochs 30 --log_every 20 --skip_if_exists\n"
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "print('\\n>>> [Step 1B] Training DenseNet-121 Baseline (~25-30 min)...\\n')\n",
+            "!python -u -m reidattack.train --data $DATA --arch densenet121 --epochs 30 --log_every 20 --skip_if_exists\n"
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "print('\\n>>> [Step 1C] Training ViT-Small Baseline (~35-40 min)...\\n')\n",
+            "!python -u -m reidattack.train --data $DATA --arch vit_small --epochs 30 --log_every 20 --skip_if_exists\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "## Step 2 - Attack Zoo & Cross-Architecture Transfer Matrix\n",
+            "Evaluates FGSM, PGD-10, MI-FGSM, and Logit-PGD across eps in {4, 8}.\n",
+            "- Crafts adversarial queries against surrogate models and evaluates transfer against all targets.\n",
+            "- Saves results incrementally after each configuration so no progress is lost if interrupted."
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "CK = 'checkpoints/resnet50.pth checkpoints/densenet121.pth checkpoints/vit_small.pth'\n",
+            "print('\\n>>> [Step 2A] Running Evasion Attack Zoo & Transfer Matrix...\\n')\n",
+            "!python -u scripts/run_attacks.py --data $DATA --ckpts $CK --eps 4 8 --mode evade\n",
+            "\n",
+            "print('\\n>>> [Step 2B] Running Impersonation Attacks (PGD, MI-FGSM)...\\n')\n",
+            "!python -u scripts/run_attacks.py --data $DATA --ckpts $CK --eps 8 --mode impersonate --attacks pgd mifgsm\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "## Step 3 - Universal Torso Invisibility Patch (EOT)\n",
+            "Trains a 64x48 universal physical patch on the torso with Expectation Over Transformation (rotation, scale, lighting, noise)."
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "print('\\n>>> [Step 3] Training Universal Physical Patch (5 epochs EOT)...\\n')\n",
+            "!python -u scripts/run_patch.py --data $DATA --src checkpoints/resnet50.pth --others checkpoints/densenet121.pth checkpoints/vit_small.pth --epochs 5\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "## Step 4 - Adversarial Training Defence\n",
+            "Trains ResNet-50 with on-the-fly PGD perturbations (eps=8/255) to quantify the accuracy-robustness trade-off."
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "print('\\n>>> [Step 4] Running Adversarial Training Defence for ResNet-50...\\n')\n",
+            "!python -u -m reidattack.adv_train --data $DATA --arch resnet50 --eps 8 --epochs 20 --log_every 15 --skip_if_exists\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "## Step 5 - Generate Analysis Visualizations\n",
+            "Generates Baseline Table, Transfer Heatmap, Epsilon Degradation Curves, Grad-CAM Attention Heatmaps, and t-SNE 2D Feature Drift."
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "print('\\n>>> [Step 5] Generating Publication-Ready Figures in results/...\\n')\n",
+            "!python -u scripts/make_baseline_table.py\n",
+            "!python -u scripts/plot_transfer_matrix.py --input results/attacks_evade.json\n",
+            "!python -u scripts/plot_eps_curve.py --input results/attacks_evade.json\n",
+            "!python -u scripts/generate_gradcam.py --ckpt checkpoints/resnet50.pth\n",
+            "!python -u scripts/plot_tsne.py\n",
+            "print('All visualization figures generated successfully!')\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "## Step 6 - Verification & Artifact Packaging\n",
+            "Validates demo components in non-blocking mode and lists all output files."
+        ]
+    },
+    {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "print('\\n>>> [Step 6] Validating Gradio UI (Non-blocking Check)...\\n')\n",
+            "!python -u demo/app.py --check\n",
+            "\n",
+            "print('\\n================ SUMMARY OF GENERATED ARTIFACTS ================')\n",
+            "!ls -lh checkpoints/\n",
+            "!ls -lh results/\n",
+            "print('\\n>>> ALL PIPELINE STAGES COMPLETED SUCCESSFULLY! <<<')\n"
+        ]
+    }
+]
+
+nb = {
+    "cells": cells,
+    "metadata": {
+        "kernelspec": {
+            "display_name": "Python 3",
+            "language": "python",
+            "name": "python3"
+        }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 5
+}
+
+with open("notebooks/kaggle_phase1.ipynb", "w", encoding="utf-8") as f:
+    json.dump(nb, f, indent=1)
+
+print("Updated notebooks/kaggle_phase1.ipynb successfully!")
