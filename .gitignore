@@ -11,3 +11,5 @@ venv/
 .vscode/
 .idea/
 kaggle.json
+kaggle_outputs/
+scratch/

@@ -61,6 +61,21 @@ def main():
 
     DATA = "/kaggle/input"
 
+    # Reuse existing trained checkpoints from previous kernel runs if available
+    ckpt_target_dir = os.path.join(repo_dir, "checkpoints")
+    os.makedirs(ckpt_target_dir, exist_ok=True)
+    for root, dirs, files in os.walk("/kaggle/input"):
+        for f in files:
+            if f.endswith(".pth"):
+                src_pth = os.path.join(root, f)
+                dst_pth = os.path.join(ckpt_target_dir, f)
+                if not os.path.exists(dst_pth):
+                    try:
+                        shutil.copy2(src_pth, dst_pth)
+                        print(f"Reusing mounted checkpoint: {f}", flush=True)
+                    except Exception as e:
+                        print(f"Error copying {f}: {e}", flush=True)
+
     # ---------------------------------------------------------
     # STEP 1: Train Baseline Victim Models
     # ---------------------------------------------------------
