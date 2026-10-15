@@ -1,0 +1,209 @@
+[
+ {
+  "attack": "clean",
+  "eps": 0,
+  "source": "-",
+  "target": "resnet50",
+  "rank1": 86.97,
+  "rank5": 95.4,
+  "mAP": 70.64
+ },
+ {
+  "attack": "clean",
+  "eps": 0,
+  "source": "-",
+  "target": "densenet121",
+  "rank1": 77.35,
+  "rank5": 91.95,
+  "mAP": 56.63
+ },
+ {
+  "attack": "clean",
+  "eps": 0,
+  "source": "-",
+  "target": "vit_small",
+  "rank1": 91.75,
+  "rank5": 96.67,
+  "mAP": 79.69
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.03,
+  "rank5": 0.06,
+  "mAP": 0.6,
+  "impersonation_hit@1": 99.29
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 50.36,
+  "rank5": 70.43,
+  "mAP": 32.11,
+  "impersonation_hit@1": 0.77
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 88.93,
+  "rank5": 95.78,
+  "mAP": 76.87,
+  "impersonation_hit@1": 0.09
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "resnet50",
+  "rank1": 65.97,
+  "rank5": 83.46,
+  "mAP": 48.87,
+  "impersonation_hit@1": 0.71
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "densenet121",
+  "rank1": 0.03,
+  "rank5": 0.06,
+  "mAP": 0.53,
+  "impersonation_hit@1": 98.31
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "vit_small",
+  "rank1": 88.42,
+  "rank5": 95.46,
+  "mAP": 76.59,
+  "impersonation_hit@1": 0.12
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "resnet50",
+  "rank1": 72.15,
+  "rank5": 87.65,
+  "mAP": 53.5,
+  "impersonation_hit@1": 0.39
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "densenet121",
+  "rank1": 53.12,
+  "rank5": 72.09,
+  "mAP": 34.14,
+  "impersonation_hit@1": 0.42
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "vit_small",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.46,
+  "impersonation_hit@1": 98.13
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.38,
+  "impersonation_hit@1": 99.67
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 37.02,
+  "rank5": 55.49,
+  "mAP": 22.98,
+  "impersonation_hit@1": 2.29
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 84.17,
+  "rank5": 92.37,
+  "mAP": 71.25,
+  "impersonation_hit@1": 0.3
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "resnet50",
+  "rank1": 52.52,
+  "rank5": 71.73,
+  "mAP": 37.05,
+  "impersonation_hit@1": 1.63
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "densenet121",
+  "rank1": 0.03,
+  "rank5": 0.06,
+  "mAP": 0.37,
+  "impersonation_hit@1": 99.61
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "vit_small",
+  "rank1": 83.73,
+  "rank5": 92.67,
+  "mAP": 71.2,
+  "impersonation_hit@1": 0.27
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "resnet50",
+  "rank1": 62.32,
+  "rank5": 81.15,
+  "mAP": 44.73,
+  "impersonation_hit@1": 1.01
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "densenet121",
+  "rank1": 41.98,
+  "rank5": 62.41,
+  "mAP": 26.55,
+  "impersonation_hit@1": 0.77
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "vit_small",
+  "rank1": 0.0,
+  "rank5": 0.03,
+  "mAP": 0.36,
+  "impersonation_hit@1": 99.58
+ }
+]

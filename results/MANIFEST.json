@@ -1,0 +1,229 @@
+{
+ "eval_baselines": {
+  "time_utc": "2026-10-15 13:30:13",
+  "git_commit": "a1b2534",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe",
+   "densenet121.pth": "7898e78117a9",
+   "vit_small.pth": "663a471e75d6"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4"
+ },
+ "run_attacks_evade": {
+  "time_utc": "2026-10-15 15:52:40",
+  "git_commit": "a1b2534",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe",
+   "resnet50_adv_trained_eps8.pth": "75409b5dfc77"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "n_queries": 3368,
+  "attacks": [
+   "pgd",
+   "mifgsm"
+  ],
+  "eps": [
+   8
+  ],
+  "steps": 10,
+  "out": "defense.json"
+ },
+ "run_attacks_impersonate": {
+  "time_utc": "2026-10-15 15:14:32",
+  "git_commit": "a1b2534",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe",
+   "densenet121.pth": "7898e78117a9",
+   "vit_small.pth": "663a471e75d6"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "n_queries": 3368,
+  "attacks": [
+   "pgd",
+   "mifgsm"
+  ],
+  "eps": [
+   8
+  ],
+  "steps": 10,
+  "out": "attacks_impersonate.json"
+ },
+ "run_patch": {
+  "time_utc": "2026-10-15 15:35:43",
+  "git_commit": "a1b2534",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe",
+   "densenet121.pth": "7898e78117a9",
+   "vit_small.pth": "663a471e75d6"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "epochs": 40,
+  "source_model": "resnet50"
+ },
+ "figure:baseline_table.md": {
+  "time_utc": "2026-10-15 15:52:41",
+  "git_commit": "a1b2534",
+  "sources": [
+   "baselines.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4"
+ },
+ "figure:transfer_matrix_pgd_eps8_rank1.png": {
+  "time_utc": "2026-10-15 15:52:45",
+  "git_commit": "a1b2534",
+  "sources": [
+   "attacks_evade.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "attack": "pgd",
+  "eps": 8,
+  "metric": "rank1"
+ },
+ "figure:transfer_matrix_pgd_eps8_mAP.png": {
+  "time_utc": "2026-10-15 15:52:48",
+  "git_commit": "a1b2534",
+  "sources": [
+   "attacks_evade.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "attack": "pgd",
+  "eps": 8,
+  "metric": "mAP"
+ },
+ "figure:transfer_matrix_mifgsm_eps8_rank1.png": {
+  "time_utc": "2026-10-15 15:52:51",
+  "git_commit": "a1b2534",
+  "sources": [
+   "attacks_evade.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "attack": "mifgsm",
+  "eps": 8,
+  "metric": "rank1"
+ },
+ "figure:transfer_matrix_logit_pgd_eps8_rank1.png": {
+  "time_utc": "2026-10-15 15:52:54",
+  "git_commit": "a1b2534",
+  "sources": [
+   "attacks_evade.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "attack": "logit_pgd",
+  "eps": 8,
+  "metric": "rank1"
+ },
+ "figure:transfer_matrix_pgd_eps8_impersonation_hit1.png": {
+  "time_utc": "2026-10-15 15:52:57",
+  "git_commit": "a1b2534",
+  "sources": [
+   "attacks_impersonate.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "attack": "pgd",
+  "eps": 8,
+  "metric": "impersonation_hit@1"
+ },
+ "figure:eps_degradation_curve.png": {
+  "time_utc": "2026-10-15 15:53:01",
+  "git_commit": "a1b2534",
+  "sources": [
+   "attacks_evade.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "model": "resnet50"
+ },
+ "figure:patch_effect.png": {
+  "time_utc": "2026-10-15 15:53:04",
+  "git_commit": "a1b2534",
+  "sources": [
+   "patch_results.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4"
+ },
+ "figure:defense_tradeoff.png": {
+  "time_utc": "2026-10-15 15:53:07",
+  "git_commit": "a1b2534",
+  "sources": [
+   "defense.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4"
+ },
+ "figure:gradcam_analysis.png": {
+  "time_utc": "2026-10-15 15:54:03",
+  "git_commit": "a1b2534",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe",
+   "patch.pth": "d4f6f867d12e"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "queries": [
+   "/kaggle/input/datasets/pengcw1/market-1501/Market-1501-v15.09.15/query/0764_c3s2_074928_00.jpg",
+   "/kaggle/input/datasets/pengcw1/market-1501/Market-1501-v15.09.15/query/1015_c3s2_130544_00.jpg",
+   "/kaggle/input/datasets/pengcw1/market-1501/Market-1501-v15.09.15/query/0418_c3s1_100167_00.jpg"
+  ]
+ },
+ "figure:tsne_embedding_drift.png": {
+  "time_utc": "2026-10-15 15:55:01",
+  "git_commit": "a1b2534",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "ids": [
+   130,
+   717,
+   812,
+   1050,
+   1084,
+   1122,
+   1262,
+   1310
+  ],
+  "mean_cos_clean_adv": -0.46793901920318604,
+  "top1_clean": 31,
+  "top1_adv": 0,
+  "n_queries": 32
+ },
+ "figure:retrieval_before_after.png": {
+  "time_utc": "2026-10-15 15:55:56",
+  "git_commit": "a1b2534",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "still_correct_after_attack": 0,
+  "n": 4
+ }
+}

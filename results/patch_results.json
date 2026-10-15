@@ -1,0 +1,98 @@
+[
+ {
+  "model": "resnet50",
+  "condition": "clean",
+  "is_source": true,
+  "rank1": 86.97,
+  "rank5": 95.4,
+  "mAP": 70.64
+ },
+ {
+  "model": "resnet50",
+  "condition": "random_patch",
+  "is_source": true,
+  "rank1": 73.19,
+  "rank5": 86.79,
+  "mAP": 53.42
+ },
+ {
+  "model": "resnet50",
+  "condition": "trained_patch",
+  "is_source": true,
+  "rank1": 2.67,
+  "rank5": 7.48,
+  "mAP": 3.29
+ },
+ {
+  "model": "resnet50",
+  "condition": "trained_patch_eot",
+  "is_source": true,
+  "rank1": 2.73,
+  "rank5": 6.44,
+  "mAP": 3.18
+ },
+ {
+  "model": "densenet121",
+  "condition": "clean",
+  "is_source": false,
+  "rank1": 77.35,
+  "rank5": 91.95,
+  "mAP": 56.63
+ },
+ {
+  "model": "densenet121",
+  "condition": "random_patch",
+  "is_source": false,
+  "rank1": 63.27,
+  "rank5": 82.54,
+  "mAP": 43.08
+ },
+ {
+  "model": "densenet121",
+  "condition": "trained_patch",
+  "is_source": false,
+  "rank1": 13.63,
+  "rank5": 25.77,
+  "mAP": 9.76
+ },
+ {
+  "model": "densenet121",
+  "condition": "trained_patch_eot",
+  "is_source": false,
+  "rank1": 13.87,
+  "rank5": 25.33,
+  "mAP": 9.21
+ },
+ {
+  "model": "vit_small",
+  "condition": "clean",
+  "is_source": false,
+  "rank1": 91.75,
+  "rank5": 96.67,
+  "mAP": 79.69
+ },
+ {
+  "model": "vit_small",
+  "condition": "random_patch",
+  "is_source": false,
+  "rank1": 82.39,
+  "rank5": 91.51,
+  "mAP": 68.64
+ },
+ {
+  "model": "vit_small",
+  "condition": "trained_patch",
+  "is_source": false,
+  "rank1": 74.02,
+  "rank5": 87.68,
+  "mAP": 60.28
+ },
+ {
+  "model": "vit_small",
+  "condition": "trained_patch_eot",
+  "is_source": false,
+  "rank1": 70.81,
+  "rank5": 85.57,
+  "mAP": 58.73
+ }
+]

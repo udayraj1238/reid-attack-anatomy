@@ -1,0 +1,677 @@
+[
+ {
+  "attack": "clean",
+  "eps": 0,
+  "source": "-",
+  "target": "resnet50",
+  "rank1": 86.97,
+  "rank5": 95.4,
+  "mAP": 70.64
+ },
+ {
+  "attack": "clean",
+  "eps": 0,
+  "source": "-",
+  "target": "densenet121",
+  "rank1": 77.35,
+  "rank5": 91.95,
+  "mAP": 56.63
+ },
+ {
+  "attack": "clean",
+  "eps": 0,
+  "source": "-",
+  "target": "vit_small",
+  "rank1": 91.75,
+  "rank5": 96.67,
+  "mAP": 79.69
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 39.58,
+  "rank5": 56.53,
+  "mAP": 27.1
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 44.15,
+  "rank5": 63.03,
+  "mAP": 27.31
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 87.86,
+  "rank5": 94.98,
+  "mAP": 75.25
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "resnet50",
+  "rank1": 54.69,
+  "rank5": 73.34,
+  "mAP": 37.95
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "densenet121",
+  "rank1": 23.01,
+  "rank5": 37.11,
+  "mAP": 14.3
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "vit_small",
+  "rank1": 87.62,
+  "rank5": 94.6,
+  "mAP": 75.54
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "resnet50",
+  "rank1": 64.9,
+  "rank5": 82.48,
+  "mAP": 46.5
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "densenet121",
+  "rank1": 43.74,
+  "rank5": 63.84,
+  "mAP": 27.82
+ },
+ {
+  "attack": "fgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "vit_small",
+  "rank1": 43.05,
+  "rank5": 54.07,
+  "mAP": 35.58
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 30.46,
+  "rank5": 48.81,
+  "mAP": 18.85
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 88.15,
+  "rank5": 95.22,
+  "mAP": 75.57
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "resnet50",
+  "rank1": 51.84,
+  "rank5": 71.35,
+  "mAP": 36.19
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "densenet121",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "vit_small",
+  "rank1": 88.66,
+  "rank5": 95.04,
+  "mAP": 76.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "resnet50",
+  "rank1": 64.07,
+  "rank5": 82.16,
+  "mAP": 46.26
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "densenet121",
+  "rank1": 43.05,
+  "rank5": 62.32,
+  "mAP": 27.21
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "vit_small",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 17.81,
+  "rank5": 31.89,
+  "mAP": 10.93
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 83.61,
+  "rank5": 92.49,
+  "mAP": 70.43
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "resnet50",
+  "rank1": 34.47,
+  "rank5": 53.09,
+  "mAP": 22.85
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "densenet121",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.06
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "vit_small",
+  "rank1": 85.24,
+  "rank5": 92.79,
+  "mAP": 71.93
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "resnet50",
+  "rank1": 52.38,
+  "rank5": 72.09,
+  "mAP": 35.58
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "densenet121",
+  "rank1": 30.34,
+  "rank5": 48.52,
+  "mAP": 19.04
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "vit_small",
+  "rank1": 0.3,
+  "rank5": 0.36,
+  "mAP": 0.29
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.3,
+  "rank5": 1.04,
+  "mAP": 0.51
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 39.31,
+  "rank5": 59.35,
+  "mAP": 24.95
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 88.24,
+  "rank5": 95.37,
+  "mAP": 75.82
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "resnet50",
+  "rank1": 53.18,
+  "rank5": 72.18,
+  "mAP": 36.88
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "densenet121",
+  "rank1": 0.06,
+  "rank5": 0.36,
+  "mAP": 0.22
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "densenet121",
+  "target": "vit_small",
+  "rank1": 88.66,
+  "rank5": 95.25,
+  "mAP": 75.87
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "resnet50",
+  "rank1": 66.57,
+  "rank5": 82.78,
+  "mAP": 47.19
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "densenet121",
+  "rank1": 43.23,
+  "rank5": 62.08,
+  "mAP": 26.86
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 8,
+  "source": "vit_small",
+  "target": "vit_small",
+  "rank1": 0.03,
+  "rank5": 0.06,
+  "mAP": 0.15
+ },
+ {
+  "attack": "fgsm",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 74.44,
+  "rank5": 88.54,
+  "mAP": 55.61
+ },
+ {
+  "attack": "fgsm",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 72.6,
+  "rank5": 87.83,
+  "mAP": 50.86
+ },
+ {
+  "attack": "fgsm",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 91.69,
+  "rank5": 96.7,
+  "mAP": 79.68
+ },
+ {
+  "attack": "fgsm",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 62.8,
+  "rank5": 79.57,
+  "mAP": 45.61
+ },
+ {
+  "attack": "fgsm",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 63.18,
+  "rank5": 80.7,
+  "mAP": 42.37
+ },
+ {
+  "attack": "fgsm",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 90.88,
+  "rank5": 96.35,
+  "mAP": 78.98
+ },
+ {
+  "attack": "fgsm",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 4.31,
+  "rank5": 8.58,
+  "mAP": 3.18
+ },
+ {
+  "attack": "fgsm",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 7.69,
+  "rank5": 16.98,
+  "mAP": 5.55
+ },
+ {
+  "attack": "fgsm",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 76.93,
+  "rank5": 88.51,
+  "mAP": 63.58
+ },
+ {
+  "attack": "pgd",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.12,
+  "rank5": 0.5,
+  "mAP": 0.23
+ },
+ {
+  "attack": "pgd",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 68.82,
+  "rank5": 86.16,
+  "mAP": 47.97
+ },
+ {
+  "attack": "pgd",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 91.48,
+  "rank5": 96.62,
+  "mAP": 79.23
+ },
+ {
+  "attack": "pgd",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 54.13,
+  "rank5": 73.72,
+  "mAP": 35.72
+ },
+ {
+  "attack": "pgd",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 90.88,
+  "rank5": 96.38,
+  "mAP": 78.39
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 7.24,
+  "rank5": 14.88,
+  "mAP": 4.58
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 79.72,
+  "rank5": 90.74,
+  "mAP": 66.58
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 3.92,
+  "rank5": 7.84,
+  "mAP": 2.6
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 66.21,
+  "rank5": 83.88,
+  "mAP": 46.01
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 91.42,
+  "rank5": 96.73,
+  "mAP": 79.07
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.06,
+  "rank5": 0.18,
+  "mAP": 0.12
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 45.96,
+  "rank5": 65.35,
+  "mAP": 29.46
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 89.73,
+  "rank5": 96.02,
+  "mAP": 77.25
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 1.04,
+  "rank5": 3.65,
+  "mAP": 1.24
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 65.11,
+  "rank5": 80.29,
+  "mAP": 52.97
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 6.29,
+  "rank5": 14.13,
+  "mAP": 4.61
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 71.56,
+  "rank5": 87.89,
+  "mAP": 50.42
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 2,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 91.12,
+  "rank5": 96.38,
+  "mAP": 79.21
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 1.25,
+  "rank5": 3.53,
+  "mAP": 1.28
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 59.74,
+  "rank5": 78.83,
+  "mAP": 40.39
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 4,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 90.41,
+  "rank5": 96.23,
+  "mAP": 78.38
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "resnet50",
+  "rank1": 0.0,
+  "rank5": 0.36,
+  "mAP": 0.21
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "densenet121",
+  "rank1": 14.01,
+  "rank5": 25.21,
+  "mAP": 8.56
+ },
+ {
+  "attack": "logit_pgd",
+  "eps": 16,
+  "source": "resnet50",
+  "target": "vit_small",
+  "rank1": 81.53,
+  "rank5": 91.45,
+  "mAP": 68.0
+ }
+]

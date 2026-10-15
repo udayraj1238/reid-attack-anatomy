@@ -94,13 +94,13 @@ def main():
                 last_log_len = len(logs)
 
             if "COMPLETE" in status:
-                print(f"\n🎉 Kernel execution completed successfully after {elapsed_str}!", flush=True)
+                print(f"\n[SUCCESS] Kernel execution completed successfully after {elapsed_str}!", flush=True)
                 if args.download_on_finish:
                     download_outputs(args.kernel)
                 break
 
             if "FAIL" in status or "ERROR" in status or "CANCEL" in status:
-                print(f"\n⚠️ Kernel stopped or failed with status: {status}", flush=True)
+                print(f"\n[ALERT] Kernel stopped or failed with status: {status}", flush=True)
                 if msg:
                     print(f"Details: {msg}", flush=True)
                 break

@@ -1,0 +1,38 @@
+[
+ {
+  "model": "resnet50",
+  "arch": "resnet50",
+  "emb_dim": 2048,
+  "params_M": 25.1,
+  "rank1": 86.97,
+  "rank5": 95.4,
+  "rank10": 97.36,
+  "mAP": 70.64,
+  "n_query": 3368,
+  "n_gallery": 15913
+ },
+ {
+  "model": "densenet121",
+  "arch": "densenet121",
+  "emb_dim": 1024,
+  "params_M": 7.7,
+  "rank1": 77.35,
+  "rank5": 91.95,
+  "rank10": 95.07,
+  "mAP": 56.63,
+  "n_query": 3368,
+  "n_gallery": 15913
+ },
+ {
+  "model": "vit_small",
+  "arch": "vit_small",
+  "emb_dim": 384,
+  "params_M": 21.9,
+  "rank1": 91.75,
+  "rank5": 96.67,
+  "rank10": 98.01,
+  "mAP": 79.69,
+  "n_query": 3368,
+  "n_gallery": 15913
+ }
+]
