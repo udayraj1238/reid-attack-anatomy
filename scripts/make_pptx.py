@@ -301,8 +301,7 @@ def main():
         add_card(s6, Inches(6.9), Inches(1.8), Inches(5.6), Inches(4.4))
         s6.shapes.add_picture(img_cam, Inches(7.1), Inches(2.0), Inches(5.2), Inches(4.0))
         tb = s6.shapes.add_textbox(Inches(6.9), Inches(6.3), Inches(5.6), Inches(0.8))
-        p = tb.text_frame.paragraphs[0]
-        p.text = "Grad-CAM Feature Saliency: Gradient perturbations shift network focus away from person torso to background clutter."
+        p.text = "Grad-CAM Saliency: Heatmaps stay mostly on the pedestrian, but cosine similarity to true ID drops from ~0.5-0.8 down to ~ -0.3."
         p.font.size = Pt(11); p.font.color.rgb = COLOR_MUTED
 
     # -------------------------------------------------------------------------
@@ -423,7 +422,7 @@ def main():
     ps.font.size = Pt(17); ps.font.bold = True; ps.font.color.rgb = COLOR_GREEN
     concl = [
         "Re-ID is uniquely vulnerable: Gradient evasion attacks drive Rank-1 retrieval to 0.00 % without requiring classification label access.",
-        "Architecture Matters: ViTs exhibit substantial intrinsic resistance to CNN-crafted transfer attacks (maintaining >88 % Rank-1).",
+        "Architecture Transfer: ViT resists CNN transfer (maintaining 83-88 % Rank-1), but drops to 0.00 % white-box; mechanism (attention vs patch size vs pretraining) remains an open hypothesis.",
         "Physical Feasibility: A single 64x48 torso patch trained with EOT effectively blinds surveillance models (Rank-1 86.97 % -> 2.67 %).",
         "Defense Reality: Adversarial training restores robust Rank-1 to 29.19 % but incurs a 12.45 % clean retrieval penalty."
     ]

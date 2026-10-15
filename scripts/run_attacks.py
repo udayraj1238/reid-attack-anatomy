@@ -141,7 +141,7 @@ def main():
             extra = f"  hit@1 {r['impersonation_hit@1']:.1f}" if tp is not None else ""
             print(f"   -> {t:28s} R1 {r['rank1']:.2f}  mAP {r['mAP']:.2f}{extra}", flush=True)
         save()                                        # incremental save: a crash never loses finished configs
-    stamp(f"run_attacks_{a.mode}", ckpts=a.ckpts,
+    stamp(f"run_attacks:{os.path.basename(out)}", ckpts=a.ckpts,
           extra={"n_queries": int(len(q_pids)), "attacks": attacks, "eps": a.eps, "steps": a.steps, "out": os.path.basename(out)})
     print(f"\nSaved {len(rows)} rows to {out}", flush=True)
 

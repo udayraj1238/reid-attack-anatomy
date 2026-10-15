@@ -185,12 +185,12 @@ with penalty weight $\lambda_{\text{TV}} = 10^{-4}$.
 
 ### 3.2 Expectation Over Transformations (EOT)
 
-To model real-world camera geometry, printing artifacts, and motion variation, the distribution $\mathcal{T}_{\text{EOT}}$ samples independent affine and photometric perturbations during each forward pass:
-- **Random Scaling**: Factor $s \sim \mathcal{U}(0.8, 1.2)$.
-- **Random In-Plane Rotation**: Angle $\theta \sim \mathcal{U}(-15^\circ, +15^\circ)$.
-- **Spatial Jitter**: Translation $(\Delta x, \Delta y) \sim \mathcal{U}(-8, +8)$ pixels.
+To model real-world camera geometry, printing artifacts, and motion variation, the distribution $\mathcal{T}_{\text{EOT}}$ in `reidattack/patch.py` samples independent affine and photometric perturbations during each forward pass:
+- **Random Scaling**: Factor $s \sim \mathcal{U}(0.8, 1.25)$.
+- **Random In-Plane Rotation**: Angle $\theta \sim \mathcal{U}(-20^\circ, +20^\circ)$.
+- **Spatial Shift**: Translation $(\Delta x, \Delta y) \sim \mathcal{U}(-0.15, +0.15)$ in normalized coordinates.
 - **Photometric Lighting**: Multiplicative scaling $\beta \sim \mathcal{U}(0.8, 1.2)$.
-- **Additive Sensor Noise**: Gaussian noise $\eta \sim \mathcal{N}(0, 0.05^2)$.
+- **Additive Sensor Noise**: Gaussian noise $\eta \sim \mathcal{N}(0, 0.02^2)$.
 
 ---
 
@@ -326,9 +326,9 @@ Table 5 evaluates the physical-feasibility universal patch trained solely on Res
 | **ViT-Small/16** | Black-Box Transfer | **+ Trained Patch (Test-Time EOT)**| 70.81 % | 58.73 % | -20.94 % |
 
 **Patch Observations**:
-1. **Efficacy Beyond Occlusion**: The random patch control demonstrates that obscuring 7.3% of person pixels accounts for only a 13.78% drop in Rank-1. The learned adversarial patch achieves an **84.30% absolute reduction**, confirming that degradation is driven by adversarial optimization.
+1. **Efficacy Beyond Occlusion**: The random patch control demonstrates that obscuring 9.4% of the image (64x48 out of 256x128 pixels) accounts for a 13.78% drop in Rank-1. The learned adversarial patch achieves an **84.30% absolute reduction** down to **2.67% Rank-1**, confirming that degradation is driven by adversarial optimization rather than occlusion.
 2. **EOT Invariance**: Introducing test-time affine transforms, photometric jitter, and sensor noise results in negligible performance difference (2.67% vs 2.73% Rank-1), confirming that EOT optimization creates robust adversarial features.
-3. **Black-Box Patch Transfer**: The patch transfers strongly to DenseNet-121, collapsing Rank-1 from 77.35% to **13.63%**, while ViT-Small once again displays intrinsic resistance (70.81% Rank-1).
+3. **Black-Box Patch Transfer**: The patch transfers strongly to DenseNet-121, collapsing Rank-1 from 77.35% to **13.63%**, while transferring only weakly to ViT-Small (74.02% Rank-1 vs 82.39% for ViT's random-patch control).
 
 ---
 
@@ -347,25 +347,25 @@ Table 6 evaluates standard ResNet-50 versus the adversarially trained model (`re
 | **Black-Box MI-FGSM**| Standard ResNet-50 | **Robust ResNet-50** | **71.79 %** | **49.65 %** | Resists standard transfer |
 
 **Defense Analysis**:
-- Adversarial training restores robust Rank-1 from **0.00% to 29.19%** against white-box PGD-10, and retains **72.39% Rank-1** against black-box attacks from the standard model.
+- Adversarial training restores robust Rank-1 from **0.00% to 29.19%** against white-box PGD-10, and retains **72.39% Rank-1** against black-box attacks from the standard model. Attacks crafted on the defended model hurt the standard model badly (11.61% Rank-1).
 - Robustness incurs an explicit trade-off: clean Rank-1 drops by **12.45%** (86.97% $\to$ 74.52%).
-- Methodological Caveat: The defense was trained against PGD-5 and evaluated against PGD-10. Stronger adaptive evaluations (e.g. PGD-50) would likely erode robustness further.
+- Methodological Caveat: The defense was trained against PGD-5 and evaluated against PGD-10. Stronger adaptive evaluations (e.g. PGD-50) are needed to rigorously test whether this robustness holds under deeper iterations.
 
 ---
 
 ## 6. Interpretability & Visual Analysis
 
-All figures are generated directly from the trained checkpoints on the Market-1501 evaluation set.
+All figures are generated directly from the trained checkpoints on the Market-1501 evaluation set and saved at 200 DPI:
 
 1. **Retrieval Ranking Displacement (`retrieval_before_after.png`)**:
-   - For clean query identities, top-5 retrieved gallery ranks consistently display true positive matches (green borders).
-   - Under PGD-10 ($\epsilon=8/255$), true matches are displaced entirely from top-5 results; retrieved images display completely unrelated individuals sharing false surface features.
+   - Evaluates Top-5 retrieved gallery ranks across 4 sample query identities.
+   - For clean query identities, top retrieved images show true positive matches (though not all 5 positions across all queries are green). Under PGD-10 ($\epsilon=8/255$), true matches are completely eliminated from top ranks across all 4 queries (0 of 4 correct, all red borders).
 2. **Feature Saliency Drift (`gradcam_analysis.png`)**:
-   - Clean Grad-CAM activations localize heavily on distinct identity cues: upper clothing color, torso shape, and distinctive carrying bags.
-   - Under evasion attacks, activation saliency disperses to peripheral background pixels, concrete pavement textures, and camera artifacts, destroying person-specific embedding information.
-3. **Metric Space Dispersion (`tsne_embedding_drift.png`)**:
-   - Clean embeddings exhibit tight, well-separated identity clusters with high inter-class margins.
-   - Under evasion, adversarial query embeddings migrate outward from their respective cluster centroids into inter-class voids, collapsing retrieval rankings.
+   - Heatmaps stay mostly focused on the pedestrian body rather than relocating to background pavement.
+   - What visibly changes is the network's semantic alignment: cosine similarity to the true identity drops sharply from positive values (0.83 / 0.47 / 0.60) down to approximately −0.3 under attack.
+3. **Metric Space Drift (`tsne_embedding_drift.png`)**:
+   - For clean queries, embeddings align closely with their respective gallery identity clusters.
+   - Under evasion attack, the perturbed query embeddings from distinct identities collapse inward toward the same central region of the feature space, rather than dispersing outward into arbitrary directions.
 
 ---
 
