@@ -28,6 +28,7 @@ def main():
     ap.add_argument("--attacks", nargs="+", default=["fgsm", "pgd", "mifgsm", "logit_pgd"])
     ap.add_argument("--eps", nargs="+", type=int, default=[8])
     ap.add_argument("--steps", type=int, default=10)
+    ap.add_argument("--chunk", type=int, default=32, help="crafting sub-batch size (default: 32)")
     ap.add_argument("--mode", default="evade", choices=["evade", "impersonate"])
     ap.add_argument("--max_query", type=int, default=0, help="0 = all 3368 queries (use a small number only for dry runs)")
     ap.add_argument("--out", default=None, help="default: <results>/attacks_<mode>.json")
@@ -56,6 +57,8 @@ def main():
 
     print("Extracting clean gallery embeddings...", flush=True)
     gal = {n: extract(models[n], g_dl, dev) for n in names}
+    if dev == "cuda":
+        torch.cuda.empty_cache()
     g_pids, g_cams = gal[names[0]][1], gal[names[0]][2]
     centroids = {}
     for n in names:                                   # identity prototypes = impersonation targets
@@ -114,19 +117,24 @@ def main():
         sm = models[src]
         for bi, (x, _, _) in enumerate(batches):
             x = x.to(dev); B = len(x)
-            with torch.no_grad():
-                clean = sm.embed(x)
-            if atk == "logit_pgd":                    # classification-style baseline (pseudo-label = own prediction)
+            xas = []
+            for ci, xc in enumerate(x.split(a.chunk)):
                 with torch.no_grad():
-                    lab = sm.logits(x).argmax(1)
-                xa = pgd(logit_objective(sm, lab), x, eps / 255, a.steps)
-            else:
-                if a.mode == "evade":
-                    obj = evade_objective(sm, clean)
+                    clean = sm.embed(xc)
+                if atk == "logit_pgd":                    # classification-style baseline (pseudo-label = own prediction)
+                    with torch.no_grad():
+                        lab = sm.logits(xc).argmax(1)
+                    xac = pgd(logit_objective(sm, lab), xc, eps / 255, a.steps)
                 else:
-                    tf = torch.stack([centroids[src][int(p)] for p in t_pids[off:off + B]]).to(dev)
-                    obj = impersonate_objective(sm, tf)
-                xa = ATTACKS[atk](obj, x, eps / 255, a.steps)
+                    if a.mode == "evade":
+                        obj = evade_objective(sm, clean)
+                    else:
+                        c_off = off + ci * a.chunk
+                        tf = torch.stack([centroids[src][int(p)] for p in t_pids[c_off:c_off + len(xc)]]).to(dev)
+                        obj = impersonate_objective(sm, tf)
+                    xac = ATTACKS[atk](obj, xc, eps / 255, a.steps)
+                xas.append(xac)
+            xa = torch.cat(xas)
             assert (xa - x).abs().max() <= eps / 255 + 1e-5, "epsilon budget violated"
             with torch.no_grad():
                 for t in names:
