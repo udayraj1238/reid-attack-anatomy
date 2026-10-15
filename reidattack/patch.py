@@ -60,7 +60,7 @@ def total_variation(p):
     return (p[..., 1:, :] - p[..., :-1, :]).abs().mean() + (p[..., :, 1:] - p[..., :, :-1]).abs().mean()
 
 
-def train_patch(model, loader, epochs=5, lr=0.05, tv=0.1, device="cuda", ph=64, pw=48, log=print):
+def train_patch(model, loader, epochs=30, lr=0.05, tv=0.1, device="cuda", ph=64, pw=48, log=print):
     import time
     model.eval()
     for p in model.parameters():
@@ -70,6 +70,7 @@ def train_patch(model, loader, epochs=5, lr=0.05, tv=0.1, device="cuda", ph=64, 
     n_batches = len(loader)
     log(f"Starting Universal Patch Training: {epochs} epochs, {n_batches} batches/epoch, TV weight={tv}")
 
+    hist = []
     for ep in range(epochs):
         tot, n = 0.0, 0
         t0 = time.time()
@@ -90,6 +91,8 @@ def train_patch(model, loader, epochs=5, lr=0.05, tv=0.1, device="cuda", ph=64, 
                 elapsed = time.time() - t0
                 log(f"  [patch ep {ep+1:2d}/{epochs} | batch {bi+1:3d}/{n_batches} ({pct:3.0f}%)] mean sim: {tot/n:.3f} | {elapsed:.1f}s")
 
+        hist.append(tot / n)
         epoch_time = time.time() - t0
         log(f"[patch] Epoch {ep+1}/{epochs} complete in {epoch_time:.1f}s | Mean Cosine Sim: {tot/n:.3f} (lower = stronger attack)\n")
+    patcher.history = hist          # mean cosine-sim per epoch (saved to results for the report)
     return patcher

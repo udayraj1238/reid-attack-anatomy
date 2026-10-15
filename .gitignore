@@ -13,3 +13,6 @@ venv/
 kaggle.json
 kaggle_outputs/
 scratch/
+results_dryrun/
+logs/*.txt
+log_*.txt

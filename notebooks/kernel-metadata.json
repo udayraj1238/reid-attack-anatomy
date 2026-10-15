@@ -9,7 +9,8 @@
   "enable_tpu": "false",
   "enable_internet": "true",
   "dataset_sources": [
-    "pengcw1/market-1501"
+    "pengcw1/market-1501",
+    "udayraj1238/reid-checkpoints"
   ],
   "competition_sources": [],
   "kernel_sources": [],

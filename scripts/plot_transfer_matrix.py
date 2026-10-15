@@ -1,77 +1,53 @@
-"""Plot cross-architecture transfer matrix heatmap for ReID adversarial attacks.
-Usage:
-    python scripts/plot_transfer_matrix.py --input results/attacks_evade.json --out results/transfer_matrix_evade.png
-"""
-import argparse
-import json
-import os
-import matplotlib.pyplot as plt
+"""Transfer-matrix heat-map from results/attacks_*.json (real rows only).
+python scripts/plot_transfer_matrix.py --attack pgd --eps 8 [--metric rank1|mAP|impersonation_hit@1] [--input results/attacks_impersonate.json]"""
+import argparse, os, sys
 import numpy as np
-
-
-def plot_matrix(data_path, out_path, metric="rank1", attack_name=None, eps=8):
-    if not os.path.exists(data_path):
-        print(f"Warning: Data file {data_path} not found. Generating mock visualization for template.")
-        models = ["resnet50", "densenet121", "vit_small"]
-        # Representative synthetic transfer matrix (Rank-1 %): diagonal (whitebox) low, off-diagonal (transfer) medium
-        mock_matrix = np.array([
-            [12.4, 45.2, 58.7],  # Source: resnet50 -> Target: resnet50, densenet, vit
-            [39.8, 14.1, 52.3],  # Source: densenet121 -> Target: resnet50, densenet, vit
-            [48.6, 44.9, 18.5],  # Source: vit_small -> Target: resnet50, densenet, vit
-        ])
-    else:
-        with open(data_path, "r") as f:
-            rows = json.load(f)
-        filtered = [r for r in rows if r.get("eps") == eps and (attack_name is None or r.get("attack") == attack_name)]
-        if not filtered:
-            filtered = [r for r in rows if r.get("attack") != "clean"]
-        sources = sorted(list({r["source"] for r in filtered if r.get("source") != "-"}))
-        targets = sorted(list({r["target"] for r in filtered}))
-        models = targets
-        mock_matrix = np.zeros((len(sources), len(targets)))
-        for r in filtered:
-            if r.get("source") in sources and r.get("target") in targets:
-                si = sources.index(r["source"])
-                ti = targets.index(r["target"])
-                mock_matrix[si, ti] = r.get(metric, 0.0)
-
-    fig, ax = plt.subplots(figsize=(7, 6))
-    im = ax.imshow(mock_matrix, cmap="YlOrRd_r" if metric == "rank1" else "YlOrRd")
-    plt.colorbar(im, label=f"{metric.upper()} (%)")
-
-    ax.set_xticks(np.arange(len(models)))
-    ax.set_yticks(np.arange(len(models)))
-    ax.set_xticklabels(models, fontsize=11, fontweight="bold")
-    ax.set_yticklabels(models, fontsize=11, fontweight="bold")
-
-    ax.set_xlabel("Target (Victim) Model", fontsize=12, fontweight="bold", labelpad=10)
-    ax.set_ylabel("Source (Surrogate) Model", fontsize=12, fontweight="bold", labelpad=10)
-    title_suffix = f" ({attack_name.upper()} $\\epsilon={eps}$)" if attack_name else ""
-    ax.set_title(f"Cross-Architecture Transfer Matrix - {metric.upper()}{title_suffix}\n(Diagonal = White-box, Off-Diagonal = Black-box Transfer)",
-                 fontsize=11, pad=15)
-
-    for i in range(len(models)):
-        for j in range(len(models)):
-            val = mock_matrix[i, j]
-            color = "white" if val < 35 else "black"
-            ax.text(j, i, f"{val:.1f}%", ha="center", va="center", color=color, fontweight="bold", fontsize=11)
-
-    plt.tight_layout()
-    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    plt.savefig(out_path, dpi=300)
-    plt.close()
-    print(f"Saved transfer matrix heatmap to {out_path}")
+import matplotlib; matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from reidattack.results import load_json, rpath, stamp, order_models
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", default="results/attacks_evade.json")
-    parser.add_argument("--out", default="results/transfer_matrix_evade.png")
-    parser.add_argument("--metric", default="rank1", choices=["rank1", "mAP", "impersonation_hit@1"])
-    parser.add_argument("--attack", default="pgd")
-    parser.add_argument("--eps", type=int, default=8)
-    args = parser.parse_args()
-    plot_matrix(args.input, args.out, metric=args.metric, attack_name=args.attack, eps=args.eps)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", default=None)
+    ap.add_argument("--out", default=None)
+    ap.add_argument("--attack", default="pgd")
+    ap.add_argument("--eps", type=int, default=8)
+    ap.add_argument("--metric", default="rank1", choices=["rank1", "mAP", "impersonation_hit@1"])
+    a = ap.parse_args()
+    src = a.input or rpath("attacks_evade.json")
+    rows = load_json(src, "Run scripts/run_attacks.py first.")
+    sel = [r for r in rows if r["attack"] == a.attack and r["eps"] == a.eps and a.metric in r]
+    if not sel:
+        have = sorted({(r["attack"], r["eps"]) for r in rows if r["attack"] != "clean"})
+        raise SystemExit(f"[ERROR] no rows for attack={a.attack} eps={a.eps} metric={a.metric} in {src}. Available: {have}")
+    srcs = order_models({r["source"] for r in sel}); tgts = order_models({r["target"] for r in sel})
+    M = np.full((len(srcs), len(tgts)), np.nan)
+    for r in sel:
+        M[srcs.index(r["source"]), tgts.index(r["target"])] = r[a.metric]
+    clean = {r["target"]: r[a.metric] for r in rows if r["attack"] == "clean" and a.metric in r}
+    lower_is_stronger = a.metric != "impersonation_hit@1"
+    fig, ax = plt.subplots(figsize=(1.9 * len(tgts) + 3, 1.3 * len(srcs) + 2.8))
+    im = ax.imshow(M, cmap="YlOrRd_r" if lower_is_stronger else "YlOrRd", vmin=0, vmax=max(100 if a.metric != "impersonation_hit@1" else 50, np.nanmax(M)))
+    plt.colorbar(im, label=f"{a.metric} (%)")
+    ax.set_xticks(range(len(tgts))); ax.set_yticks(range(len(srcs)))
+    ax.set_xticklabels([f"{t}\n(clean {clean[t]:.1f})" if t in clean else t for t in tgts], fontsize=9)
+    ax.set_yticklabels(srcs, fontsize=9)
+    ax.set_xlabel("Target (victim) model"); ax.set_ylabel("Source (attacker's surrogate) model")
+    for i in range(len(srcs)):
+        for j in range(len(tgts)):
+            if np.isnan(M[i, j]):
+                ax.text(j, i, "n/a", ha="center", va="center", color="grey")
+            else:
+                dark = (M[i, j] < 35) if lower_is_stronger else (M[i, j] > 25)
+                ax.text(j, i, f"{M[i, j]:.1f}", ha="center", va="center", fontweight="bold", color="white" if dark else "black")
+    ax.set_title(f"{a.attack.upper()} eps={a.eps}/255 - {a.metric}\n(diagonal = white-box, off-diagonal = black-box transfer; real measurements)", fontsize=10)
+    plt.tight_layout()
+    out = a.out or rpath(f"transfer_matrix_{a.attack}_eps{a.eps}_{a.metric.replace('@', '')}.png")
+    plt.savefig(out, dpi=200); plt.close()
+    stamp(f"figure:{os.path.basename(out)}", sources=[src], extra={"attack": a.attack, "eps": a.eps, "metric": a.metric})
+    print("saved", out)
 
 
 if __name__ == "__main__":

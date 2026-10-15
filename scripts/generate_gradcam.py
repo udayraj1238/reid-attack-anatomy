@@ -1,148 +1,83 @@
-"""Generate Grad-CAM activation heatmaps for Clean vs Adversarial vs Patched images.
-Usage:
-    python scripts/generate_gradcam.py --ckpt checkpoints/resnet50.pth --out results/gradcam_analysis.png
+"""REAL Grad-CAM for retrieval: where does ResNet-50 look when matching a query to its true identity,
+and what happens to that evidence under FGSM / PGD / MI-FGSM (eps=8) and the universal patch?
+
+Queries are RANDOM (seeded) among those correctly matched at rank-1 on clean data - not hand-picked failures.
+python scripts/generate_gradcam.py --data /kaggle/input --ckpt checkpoints/resnet50.pth [--patch results/patch.pth]
 """
-import argparse
-import os
-import sys
+import argparse, os, random, sys
+import numpy as np, torch
+import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
-import torch
-import torch.nn.functional as F
-from PIL import Image
-
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-
-def generate_synthetic_image():
-    """Create a synthetic test image if no dataset image is loaded."""
-    x = torch.zeros(1, 3, 256, 128)
-    # Simulated pedestrian: torso in center
-    x[:, 0, 50:140, 35:93] = 0.8  # Red shirt
-    x[:, 1, 50:140, 35:93] = 0.2
-    x[:, 2, 50:140, 35:93] = 0.2
-    # Legs
-    x[:, 2, 140:230, 40:88] = 0.6  # Blue pants
-    # Add mild noise
-    x = x + 0.05 * torch.randn_like(x)
-    return x.clamp(0, 1)
-
-
-class GradCAM:
-    def __init__(self, model, target_layer):
-        self.model = model
-        self.target_layer = target_layer
-        self.gradients = None
-        self.activations = None
-        self.hook_handles = []
-        self._register_hooks()
-
-    def _register_hooks(self):
-        def forward_hook(module, input, output):
-            self.activations = output
-
-        def backward_hook(module, grad_in, grad_out):
-            self.gradients = grad_out[0]
-
-        h1 = self.target_layer.register_forward_hook(forward_hook)
-        h2 = self.target_layer.register_full_backward_hook(backward_hook)
-        self.hook_handles = [h1, h2]
-
-    def remove_hooks(self):
-        for h in self.hook_handles:
-            h.remove()
-
-    def generate_heatmap(self, input_tensor, target_feat=None):
-        self.model.zero_grad()
-        feat, _ = self.model.features(input_tensor)
-        if target_feat is None:
-            # Objective: norm of feature
-            score = feat.norm(dim=1).sum()
-        else:
-            score = (feat * target_feat).sum()
-        score.backward(retain_graph=True)
-
-        gradients = self.gradients
-        activations = self.activations
-        weights = torch.mean(gradients, dim=(2, 3), keepdim=True)
-        cam = torch.sum(weights * activations, dim=1, keepdim=True)
-        cam = F.relu(cam)
-        cam = F.interpolate(cam, size=(input_tensor.shape[2], input_tensor.shape[3]), mode="bilinear", align_corners=False)
-        cam = cam - cam.min()
-        cam = cam / (cam.max() + 1e-8)
-        return cam.squeeze().detach().cpu().numpy()
-
-
-def plot_gradcam_comparison(out_path):
-    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    fig, axes = plt.subplots(2, 4, figsize=(14, 8))
-
-    conditions = ["Clean Pedestrian", "FGSM (ε=8)", "PGD-10 (ε=8)", "Universal Torso Patch"]
-
-    # Visual simulation of Grad-CAM behavior on ReID models:
-    # 1. Clean: strong attention on distinctive shirt/backpack patterns
-    # 2. FGSM: attention begins to fragment and fade
-    # 3. PGD: attention shatters across background noise artifacts
-    # 4. Patch: attention gets sucked completely into the patch adversarial border
-    np.random.seed(42)
-
-    for col, title in enumerate(conditions):
-        # Base image
-        img = np.ones((256, 128, 3)) * 0.92
-        # Draw torso
-        img[60:140, 35:93, :] = [0.2, 0.4, 0.7]  # Blue jacket
-        img[140:230, 42:86, :] = [0.3, 0.3, 0.3]  # Dark pants
-
-        if col == 1:  # FGSM
-            img = np.clip(img + 0.03 * np.sign(np.random.randn(*img.shape)), 0, 1)
-        elif col == 2:  # PGD
-            img = np.clip(img + 0.03 * np.sign(np.random.randn(*img.shape)), 0, 1)
-        elif col == 3:  # Patch
-            img[70:130, 40:88, :] = np.random.uniform(0.1, 0.9, (60, 48, 3))
-
-        axes[0, col].imshow(img)
-        axes[0, col].set_title(title, fontsize=11, fontweight="bold")
-        axes[0, col].axis("off")
-
-        # Heatmap
-        cam = np.zeros((256, 128))
-        if col == 0:  # Clean: focused on torso & jacket
-            cam[60:140, 35:93] = 0.85
-            cam[75:125, 45:83] = 1.0
-        elif col == 1:  # FGSM: weakened
-            cam[60:140, 35:93] = 0.45
-            cam[10:60, 20:50] = 0.5  # distraction
-        elif col == 2:  # PGD: diffused background noise
-            cam[10:100, 10:110] = np.random.uniform(0.3, 0.7, (90, 100))
-            cam[140:240, 10:110] = np.random.uniform(0.2, 0.6, (100, 100))
-        elif col == 3:  # Patch: intense focal point on patch alone
-            cam[70:130, 40:88] = 1.0
-
-        # Gaussian smoothing for smooth CAM appearance
-        from scipy.ndimage import gaussian_filter
-        cam = gaussian_filter(cam, sigma=7)
-        cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
-
-        # Overlay
-        axes[1, col].imshow(img)
-        axes[1, col].imshow(cam, cmap="jet", alpha=0.55)
-        axes[1, col].set_title(f"Grad-CAM: {title}", fontsize=10, fontweight="bold")
-        axes[1, col].axis("off")
-
-    plt.suptitle("Grad-CAM Feature Saliency Disruption in Person Re-Identification",
-                 fontsize=14, fontweight="bold", y=0.98)
-    plt.tight_layout()
-    plt.savefig(out_path, dpi=300, bbox_inches="tight")
-    plt.close()
-    print(f"Saved Grad-CAM analysis to {out_path}")
+from reidattack.io import load_model
+from reidattack.attacks import fgsm, pgd, mifgsm, evade_objective
+from reidattack.patch import UniversalPatch
+from reidattack.viz_utils import load_split, load_tensor, extract_items, rank_gallery, identity_centroid, gradcam_resnet
+from reidattack.results import rpath, stamp
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--ckpt", default="checkpoints/resnet50.pth")
-    parser.add_argument("--out", default="results/gradcam_analysis.png")
-    args = parser.parse_args()
-    plot_gradcam_comparison(args.out)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", required=True)
+    ap.add_argument("--ckpt", default="checkpoints/resnet50.pth")
+    ap.add_argument("--patch", default=None)
+    ap.add_argument("--n", type=int, default=3)
+    ap.add_argument("--eps", type=int, default=8)
+    ap.add_argument("--out", default=None)
+    a = ap.parse_args()
+    out = a.out or rpath("gradcam_analysis.png")
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    model = load_model(a.ckpt, dev)
+    q_items, g_items = load_split(a.data)
+    gf, gp, gc = extract_items(model, g_items, dev)
+
+    patch_path = a.patch or rpath("patch.pth")
+    patcher = None
+    if os.path.exists(patch_path):
+        patcher = UniversalPatch().to(dev)
+        patcher.load_state_dict(torch.load(patch_path, map_location=dev, weights_only=False))
+
+    order = list(range(len(q_items))); random.Random(0).shuffle(order)
+    chosen = []
+    for i in order:
+        path, pid, cam = q_items[i]
+        with torch.no_grad():
+            qf = model.embed(load_tensor(path)[None].to(dev))[0].cpu()
+        if gp[rank_gallery(qf, gf, gp, gc, pid, cam, 1)[0]] == pid:
+            chosen.append(i)
+        if len(chosen) == a.n:
+            break
+
+    eps = a.eps / 255
+    names = ["Clean", f"FGSM (eps={a.eps})", f"PGD-10 (eps={a.eps})", f"MI-FGSM (eps={a.eps})"] + (["Universal patch"] if patcher else [])
+    fig, axes = plt.subplots(2 * len(chosen), len(names), figsize=(2.6 * len(names), 4.6 * len(chosen)))
+    for r, i in enumerate(chosen):
+        path, pid, cam = q_items[i]
+        x0 = load_tensor(path)[None].to(dev)
+        with torch.no_grad():
+            clean = model.embed(x0)
+        obj = evade_objective(model, clean)
+        variants = [x0, fgsm(obj, x0, eps), pgd(obj, x0, eps, 10), mifgsm(obj, x0, eps, 10)]
+        if patcher:
+            with torch.no_grad():
+                variants.append(patcher(x0, eot=False))
+        cen = identity_centroid(gf, gp, gc, pid, cam).to(dev)
+        for c, (name, xv) in enumerate(zip(names, variants)):
+            cam_map, score = gradcam_resnet(model, xv, cen)
+            with torch.no_grad():
+                qf = model.embed(xv)[0].cpu()
+            ok = gp[rank_gallery(qf, gf, gp, gc, pid, cam, 1)[0]] == pid
+            img = xv[0].detach().cpu().permute(1, 2, 0).numpy()
+            ax = axes[2 * r, c]; ax.imshow(img); ax.axis("off")
+            ax.set_title(f"{name}\ntop-1: {'correct' if ok else 'WRONG'}", fontsize=9, color="green" if ok else "red")
+            ax = axes[2 * r + 1, c]; ax.imshow(img); ax.imshow(cam_map[0].numpy(), cmap="jet", alpha=0.5); ax.axis("off")
+            ax.set_title(f"sim to true identity = {score[0]:.2f}", fontsize=9)
+    fig.suptitle("Grad-CAM for retrieval (ResNet-50): evidence for the TRUE identity, before vs after attack\n"
+                 "(random queries that were correctly matched on clean data; heat-maps normalised per image)", fontsize=11)
+    plt.tight_layout(rect=(0, 0, 1, 0.95))
+    plt.savefig(out, dpi=200); plt.close()
+    stamp(f"figure:{os.path.basename(out)}", ckpts=[a.ckpt] + ([patch_path] if patcher else []), extra={"queries": [q_items[i][0] for i in chosen]})
+    print("saved", out)
 
 
 if __name__ == "__main__":

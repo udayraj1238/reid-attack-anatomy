@@ -1,224 +1,112 @@
-"""Interactive Gradio Demo for ReID Attack Anatomy & Universal Invisibility Patch.
-Run locally:
-    python demo/app.py
-"""
-import os
-import sys
-import numpy as np
-try:
-    import torch
-except ImportError:
-    torch = None
-from PIL import Image, ImageDraw, ImageFont
+"""Live demo on the REAL ResNet-50 (not a simulation): pick a Market-1501 query or upload a photo, apply a real
+attack / the trained universal patch, and watch the real retrieval ranking change.
 
-# Try importing gradio
-try:
-    import gradio as gr
-except ImportError:
-    gr = None
-
+python demo/app.py --data <market1501_dir> --ckpt checkpoints/resnet50.pth [--patch results/patch.pth]
+python demo/app.py --data ... --check        # headless self-check, no UI
+The demo gallery is a seeded SUBSET of Market-1501 (150 identities) so it starts fast."""
+import argparse, os, random, sys
+import numpy as np, torch
+from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Attempt to load model if checkpoints exist
-CHECKPOINT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "checkpoints", "resnet50.pth")
-PATCH_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "results", "patch.png")
-
-
-def create_synthetic_pedestrian(identity_id=1, color=(60, 100, 180)):
-    """Generate a clean synthetic pedestrian image (256x128) if no sample image is uploaded."""
-    img = Image.new("RGB", (128, 256), color=(240, 240, 240))
-    draw = ImageDraw.Draw(img)
-
-    # Head
-    draw.ellipse([(48, 20), (80, 55)], fill=(230, 195, 165))
-    # Torso (Shirt)
-    draw.rectangle([(38, 55), (90, 140)], fill=color)
-    # Backpack / accessory
-    draw.rectangle([(80, 65), (95, 120)], fill=(40, 40, 40))
-    # Legs (Trousers)
-    draw.rectangle([(42, 140), (62, 230)], fill=(50, 60, 70))
-    draw.rectangle([(66, 140), (86, 230)], fill=(50, 60, 70))
-    # Shoes
-    draw.rectangle([(38, 230), (62, 245)], fill=(20, 20, 20))
-    draw.rectangle([(66, 230), (90, 245)], fill=(20, 20, 20))
-
-    # Add label
-    draw.text((10, 5), f"ID: {identity_id:04d}", fill=(100, 100, 100))
-    return img
+from reidattack.io import load_model
+from reidattack.patch import UniversalPatch
+from reidattack.viz_utils import load_split, load_tensor, extract_items
+from reidattack.demo_core import craft, search, ATTACK_CHOICES
 
 
-def apply_adversarial_simulation(img_pil, attack_type, eps_val=8):
-    """
-    Simulate or compute real attack perturbation and universal patch application.
-    """
-    img_arr = np.array(img_pil.convert("RGB")).astype(np.float32) / 255.0
-    h, w, c = img_arr.shape
-    eps = eps_val / 255.0
-
-    perturbed = img_arr.copy()
-    diff = np.zeros_like(img_arr)
-    patch_applied = False
-
-    if attack_type == "Universal Torso Patch (EOT)":
-        # Torso bounding box: y in [70, 134], x in [40, 88] (64x48)
-        py1, py2 = int(0.27 * h), int(0.27 * h) + 64
-        px1, px2 = int(0.31 * w), int(0.31 * w) + 48
-
-        # Create or use colorful high-frequency universal patch texture
-        np.random.seed(42)
-        patch_texture = np.random.uniform(0.1, 0.9, (64, 48, 3))
-        # Add smooth adversarial gradient patterns
-        for i in range(3):
-            patch_texture[:, :, i] += 0.3 * np.sin(np.linspace(0, 10, 64))[:, None]
-        patch_texture = np.clip(patch_texture, 0.0, 1.0)
-
-        perturbed[py1:py2, px1:px2, :] = patch_texture
-        diff = np.abs(perturbed - img_arr)
-        patch_applied = True
-        sim_score = 0.312  # Sharp drop in cosine similarity
-        status_msg = "Universal Patch Applied! Torso feature representation heavily degraded."
-
-    elif attack_type == "PGD Iterative Attack (eps=8/255)":
-        np.random.seed(123)
-        noise = np.sign(np.random.randn(h, w, c)) * eps
-        perturbed = np.clip(img_arr + noise, 0.0, 1.0)
-        diff = np.abs(perturbed - img_arr) * (255.0 / eps_val)  # Amplify diff for visual feedback
-        sim_score = 0.185
-        status_msg = "PGD Attack Applied! High-frequency imperceptible noise disrupts metric manifold."
-
-    elif attack_type == "FGSM 1-Step Attack (eps=8/255)":
-        np.random.seed(99)
-        noise = np.sign(np.random.randn(h, w, c)) * eps * 0.7
-        perturbed = np.clip(img_arr + noise, 0.0, 1.0)
-        diff = np.abs(perturbed - img_arr) * (255.0 / eps_val)
-        sim_score = 0.462
-        status_msg = "FGSM 1-Step Attack Applied! Single gradient step reduces retrieval precision."
-
-    else:  # Clean
-        sim_score = 1.000
-        status_msg = "Clean Image. Normal extraction and metric retrieval active."
-
-    perturbed_pil = Image.fromarray((perturbed * 255.0).astype(np.uint8))
-    diff_pil = Image.fromarray((np.clip(diff, 0, 1) * 255.0).astype(np.uint8))
-
-    # Gallery Simulation
-    if sim_score > 0.85:
-        retrieval_ranking = [
-            ("Rank 1 (Matched True ID)", "94.8% Match", "#28a745"),
-            ("Rank 2 (Different Cam True ID)", "91.2% Match", "#28a745"),
-            ("Rank 3 (Distractor ID 0421)", "43.1% Match", "#6c757d"),
-            ("Rank 4 (Distractor ID 0108)", "38.5% Match", "#6c757d"),
-            ("Rank 5 (Distractor ID 0884)", "32.0% Match", "#6c757d"),
-        ]
-    elif sim_score > 0.40:
-        retrieval_ranking = [
-            ("Rank 1 (Wrong ID 0421)", "58.4% Match", "#dc3545"),
-            ("Rank 2 (Wrong ID 0884)", "52.1% Match", "#dc3545"),
-            ("Rank 3 (Wrong ID 0108)", "49.0% Match", "#dc3545"),
-            ("Rank 4 (True ID - Demoted!)", "46.2% Match", "#ffc107"),
-            ("Rank 5 (Wrong ID 0912)", "41.8% Match", "#dc3545"),
-        ]
-    else:  # Complete collapse
-        retrieval_ranking = [
-            ("Rank 1 (Wrong ID 0884)", "64.2% Match", "#dc3545"),
-            ("Rank 2 (Wrong ID 0108)", "61.0% Match", "#dc3545"),
-            ("Rank 3 (Wrong ID 0912)", "57.8% Match", "#dc3545"),
-            ("Rank 4 (Wrong ID 0421)", "55.3% Match", "#dc3545"),
-            ("Rank > 50 (True ID Collapsed!)", "18.5% Match", "#dc3545"),
-        ]
-
-    rank_markdown = "### 🔍 Top Retrieved Gallery Ranks:\n" + "\n".join(
-        f"- <b style='color:{color}'>{rank}</b> — Similarity Score: {score}"
-        for rank, score, color in retrieval_ranking
-    )
-
-    return (
-        perturbed_pil,
-        diff_pil,
-        f"{sim_score:.3f} / 1.000",
-        status_msg,
-        rank_markdown,
-    )
+def build_state(a, dev):
+    model = load_model(a.ckpt, dev)
+    q_items, g_items = load_split(a.data)
+    rng = random.Random(0)
+    by = {}
+    for it in g_items:
+        if it[1] > 0:
+            by.setdefault(it[1], []).append(it)
+    pids = sorted(rng.sample([p for p, v in by.items() if len(v) >= 4], a.n_ids))
+    sub_g = [it for p in pids for it in by[p]]
+    gf, gp, gc = extract_items(model, sub_g, dev)
+    sub_q = [it for it in q_items if it[1] in set(pids)]
+    patcher = None
+    if a.patch and os.path.exists(a.patch):
+        patcher = UniversalPatch().to(dev)
+        patcher.load_state_dict(torch.load(a.patch, map_location=dev, weights_only=False))
+    return dict(model=model, g_items=sub_g, gf=gf, gp=gp, gc=gc, q_items=sub_q, patcher=patcher, dev=dev)
 
 
-def build_interface():
-    if gr is None:
-        return None
+def run_query(S, q_choice, upload, attack, eps):
+    dev, model = S["dev"], S["model"]
+    q_pid = q_cam = None
+    if upload is not None:
+        x = load_tensor_from_pil(upload).to(dev)
+    else:
+        path, q_pid, q_cam = S["q_items"][int(q_choice)]
+        x = load_tensor(path)[None].to(dev)
+    xa = craft(model, x, attack, eps, S["patcher"])
+    res = []
+    for xv in (x, xa):
+        idx, sims, q = search(model, xv, S["gf"], S["gp"], S["gc"], q_pid, q_cam, 5)
+        res.append((idx, sims, q))
+    imgs = []
+    for tag, (idx, sims, _) in zip(("before", "after"), res):
+        for j, gi in enumerate(idx):
+            im = Image.open(S["g_items"][gi][0]).convert("RGB").resize((128, 256))
+            if q_pid is not None:
+                ok = S["gp"][gi] == q_pid
+                ImageDraw.Draw(im).rectangle([0, 0, 127, 255], outline=(0, 200, 0) if ok else (230, 0, 0), width=6)
+            imgs.append((im, f"{tag} - rank {j+1}  sim {sims[j]:.2f}"))
+    cos = float((res[0][2] * res[1][2]).sum())
+    msg = f"cosine(clean emb, attacked emb) = {cos:.3f}"
+    if q_pid is not None:
+        msg += f" | top-1 correct: before={S['gp'][res[0][0][0]] == q_pid}, after={S['gp'][res[1][0][0]] == q_pid}"
+    else:
+        msg += " | (uploaded photo has no ground truth, so no green/red borders)"
+    to_pil = lambda t: Image.fromarray((t[0].detach().cpu().permute(1, 2, 0).numpy() * 255).astype(np.uint8))
+    return to_pil(x), to_pil(xa), imgs, msg
 
-    with gr.Blocks(title="ReID Attack Anatomy - Interactive Demo") as demo:
-        gr.Markdown(
-            """
-            # 🎯 Anatomy of a Person ReID Attack
-            ### Universal Invisibility Patch & Adversarial Robustness Explorer
-            *Deep Learning Final Project — Team 4-Person Collaboration*
-            """
-        )
 
+def load_tensor_from_pil(pil):
+    from torchvision import transforms as T
+    return T.Compose([T.Resize((256, 128)), T.ToTensor()])(pil.convert("RGB"))[None]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", required=True)
+    ap.add_argument("--ckpt", default="checkpoints/resnet50.pth")
+    ap.add_argument("--patch", default="results/patch.pth")
+    ap.add_argument("--n_ids", type=int, default=150)
+    ap.add_argument("--check", action="store_true")
+    ap.add_argument("--port", type=int, default=7860)
+    a = ap.parse_args()
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    S = build_state(a, dev)
+    print(f"demo gallery: {len(S['g_items'])} images, {len(S['q_items'])} sample queries, patch loaded: {S['patcher'] is not None}")
+    if a.check:
+        for atk in ATTACK_CHOICES:
+            if atk == "Universal patch" and S["patcher"] is None:
+                print("skip patch (no patch.pth)"); continue
+            _, _, _, msg = run_query(S, 0, None, atk, 8)
+            print(f"[check] {atk:16s} {msg}")
+        return
+    import gradio as gr
+    choices = [(f"{os.path.basename(p)}", i) for i, (p, _, _) in enumerate(S["q_items"])]
+    with gr.Blocks(title="ReID attack demo (real model)") as ui:
+        gr.Markdown("# Attacking person re-identification (real ResNet-50, real attacks)\n"
+                    "Pick a query, choose an attack, see the retrieval result before/after. Green = same identity, red = wrong.")
         with gr.Row():
-            with gr.Column(scale=1):
-                input_img = gr.Image(
-                    value=create_synthetic_pedestrian(identity_id=1),
-                    type="pil",
-                    label="Input Pedestrian Query",
-                )
-                attack_select = gr.Radio(
-                    choices=[
-                        "Clean Image",
-                        "Universal Torso Patch (EOT)",
-                        "PGD Iterative Attack (eps=8/255)",
-                        "FGSM 1-Step Attack (eps=8/255)",
-                    ],
-                    value="Clean Image",
-                    label="Select Adversarial Manipulation",
-                )
-                eps_slider = gr.Slider(minimum=2, maximum=16, value=8, step=1, label="Perturbation Budget ε (/255)")
-                btn_run = gr.Button("🚀 Run Attack & Evaluate Retrieval", variant="primary")
-
-            with gr.Column(scale=1):
-                out_perturbed = gr.Image(type="pil", label="Adversarial / Patched Image")
-                out_diff = gr.Image(type="pil", label="Amplified Perturbation Pattern")
-
-            with gr.Column(scale=1):
-                sim_box = gr.Textbox(label="Cosine Similarity to Clean Prototype", value="1.000 / 1.000")
-                status_box = gr.Textbox(label="Threat Status", value="Clean Image")
-                rank_box = gr.Markdown()
-
-        btn_run.click(
-            fn=apply_adversarial_simulation,
-            inputs=[input_img, attack_select, eps_slider],
-            outputs=[out_perturbed, out_diff, sim_box, status_box, rank_box],
-        )
-
-        attack_select.change(
-            fn=apply_adversarial_simulation,
-            inputs=[input_img, attack_select, eps_slider],
-            outputs=[out_perturbed, out_diff, sim_box, status_box, rank_box],
-        )
-
-    return demo
+            q = gr.Dropdown(choices, value=0, label="Sample query (Market-1501)")
+            up = gr.Image(type="pil", label="...or upload your own photo (optional)")
+        with gr.Row():
+            atk = gr.Radio(ATTACK_CHOICES, value="PGD-10", label="Attack")
+            eps = gr.Slider(1, 16, value=8, step=1, label="epsilon (/255) - ignored for the patch")
+        btn = gr.Button("Run")
+        with gr.Row():
+            o1 = gr.Image(label="query (clean)"); o2 = gr.Image(label="query (attacked)")
+        gal = gr.Gallery(label="top-5 before (first 5) and after (last 5)", columns=5, height=620)
+        txt = gr.Textbox(label="summary")
+        btn.click(lambda *args: run_query(S, *args), [q, up, atk, eps], [o1, o2, gal, txt])
+    ui.launch(server_port=a.port, share=False)
 
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--check", action="store_true", help="Verify interface without launching blocking server")
-    parser.add_argument("--port", type=int, default=7860)
-    args = parser.parse_args()
-
-    clean = create_synthetic_pedestrian(1)
-    res = apply_adversarial_simulation(clean, "Universal Torso Patch (EOT)", 8)
-    print("Synthetic simulation test passed! Output similarity:", res[2])
-
-    if args.check:
-        if gr is not None:
-            app = build_interface()
-            print("Gradio interface constructed and verified successfully (--check mode). Exiting cleanly.")
-        else:
-            print("Gradio not installed; synthetic check completed.")
-        sys.exit(0)
-
-    if gr is None:
-        print("Gradio is not installed. To run the web UI, install via: pip install gradio")
-    else:
-        app = build_interface()
-        app.launch(server_name="127.0.0.1", server_port=args.port, share=False)
+    main()
