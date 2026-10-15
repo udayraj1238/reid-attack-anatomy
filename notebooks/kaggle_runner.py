@@ -15,7 +15,7 @@ except Exception:
     pass
 
 # ------------------------------ settings ------------------------------
-DRY_RUN = True           # True = ~10 min crash-test on 160 queries; writes to results_dryrun/ (never use for the report)
+DRY_RUN = False          # True = ~10 min crash-test on 160 queries; writes to results_dryrun/ (never use for the report)
 REPO_URL = "https://github.com/udayraj1238/reid-attack-anatomy.git"
 BRANCH = "main"
 TRAIN_IF_MISSING = True  # train baselines / adversarial model only if their .pth is not found
