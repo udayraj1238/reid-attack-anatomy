@@ -61,6 +61,8 @@ def main():
 
     print("Extracting clean gallery embeddings...", flush=True)
     gal = {n: extract(models[n], g_dl, dev) for n in names}
+    if dev == "cuda":
+        torch.cuda.empty_cache()
     g_pids, g_cams = gal[names[0]][1], gal[names[0]][2]
     batches, seen = [], 0
     for x, y, c in q_dl:
@@ -108,6 +110,8 @@ def main():
                 with torch.no_grad():
                     for t in names:
                         feats[t].append(models[t].embed(xa).cpu())
+            if dev == "cuda":
+                torch.cuda.empty_cache()
             if (bi + 1) % 5 == 0 or bi + 1 == len(batches):
                 print(f"   batch {bi+1}/{len(batches)}  {time.time()-t0:.0f}s", flush=True)
         for t in names:
