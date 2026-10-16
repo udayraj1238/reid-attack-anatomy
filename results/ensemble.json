@@ -1,0 +1,539 @@
+[
+ {
+  "attack": "clean",
+  "eps": 0,
+  "ensemble": "-",
+  "members": [],
+  "target": "resnet50",
+  "role": "-",
+  "rank1": 86.94,
+  "rank5": 95.4,
+  "mAP": 70.64
+ },
+ {
+  "attack": "clean",
+  "eps": 0,
+  "ensemble": "-",
+  "members": [],
+  "target": "densenet121",
+  "role": "-",
+  "rank1": 77.35,
+  "rank5": 91.95,
+  "mAP": 56.63
+ },
+ {
+  "attack": "clean",
+  "eps": 0,
+  "ensemble": "-",
+  "members": [],
+  "target": "vit_small",
+  "role": "-",
+  "rank1": 91.75,
+  "rank5": 96.67,
+  "mAP": 79.69
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "resnet50",
+  "role": "held_out",
+  "rank1": 42.49,
+  "rank5": 61.05,
+  "mAP": 28.17
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "densenet121",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "vit_small",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.06
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "resnet50",
+  "role": "held_out",
+  "rank1": 29.66,
+  "rank5": 47.42,
+  "mAP": 19.65
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "densenet121",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.06
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "vit_small",
+  "role": "member",
+  "rank1": 0.39,
+  "rank5": 0.8,
+  "mAP": 0.49
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "resnet50",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "densenet121",
+  "role": "held_out",
+  "rank1": 21.62,
+  "rank5": 36.49,
+  "mAP": 13.15
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "vit_small",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.06
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "resnet50",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "densenet121",
+  "role": "held_out",
+  "rank1": 13.6,
+  "rank5": 24.38,
+  "mAP": 8.64
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "vit_small",
+  "role": "member",
+  "rank1": 0.39,
+  "rank5": 1.04,
+  "mAP": 0.49
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "resnet50",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "densenet121",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 8,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "vit_small",
+  "role": "held_out",
+  "rank1": 86.46,
+  "rank5": 94.27,
+  "mAP": 73.24
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "resnet50",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "densenet121",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.03,
+  "mAP": 0.06
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 8,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "vit_small",
+  "role": "held_out",
+  "rank1": 80.88,
+  "rank5": 91.09,
+  "mAP": 68.23
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "resnet50",
+  "role": "held_out",
+  "rank1": 10.24,
+  "rank5": 21.62,
+  "mAP": 7.35
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "densenet121",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "vit_small",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "resnet50",
+  "role": "held_out",
+  "rank1": 2.79,
+  "rank5": 6.53,
+  "mAP": 2.3
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "densenet121",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "densenet121+vit_small",
+  "members": [
+   "densenet121",
+   "vit_small"
+  ],
+  "target": "vit_small",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "resnet50",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "densenet121",
+  "role": "held_out",
+  "rank1": 3.12,
+  "rank5": 7.69,
+  "mAP": 2.42
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "vit_small",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "resnet50",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "densenet121",
+  "role": "held_out",
+  "rank1": 0.68,
+  "rank5": 1.9,
+  "mAP": 0.88
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "resnet50+vit_small",
+  "members": [
+   "resnet50",
+   "vit_small"
+  ],
+  "target": "vit_small",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "resnet50",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "densenet121",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "vit_small",
+  "role": "held_out",
+  "rank1": 72.51,
+  "rank5": 85.63,
+  "mAP": 59.29
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "resnet50",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "densenet121",
+  "role": "member",
+  "rank1": 0.0,
+  "rank5": 0.0,
+  "mAP": 0.05
+ },
+ {
+  "attack": "mifgsm",
+  "eps": 16,
+  "ensemble": "resnet50+densenet121",
+  "members": [
+   "resnet50",
+   "densenet121"
+  ],
+  "target": "vit_small",
+  "role": "held_out",
+  "rank1": 57.39,
+  "rank5": 73.34,
+  "mAP": 46.65
+ }
+]

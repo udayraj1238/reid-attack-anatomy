@@ -295,5 +295,124 @@
   ],
   "steps": 10,
   "out": "attacks_impersonate.json"
+ },
+ "run_attacks:defense_pgd50.json": {
+  "time_utc": "2026-10-16 04:10:45",
+  "git_commit": "ddb418d",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe",
+   "resnet50_adv_trained_eps8.pth": "75409b5dfc77"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "n_queries": 3368,
+  "attacks": [
+   "pgd",
+   "mifgsm"
+  ],
+  "eps": [
+   8
+  ],
+  "steps": 50,
+  "out": "defense_pgd50.json"
+ },
+ "run_attacks:defense_eps_sweep.json": {
+  "time_utc": "2026-10-16 04:56:06",
+  "git_commit": "ddb418d",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe",
+   "resnet50_adv_trained_eps8.pth": "75409b5dfc77"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "n_queries": 3368,
+  "attacks": [
+   "pgd"
+  ],
+  "eps": [
+   2,
+   4,
+   16
+  ],
+  "steps": 10,
+  "out": "defense_eps_sweep.json"
+ },
+ "run_ensemble:ensemble.json": {
+  "time_utc": "2026-10-16 10:43:51",
+  "git_commit": "d09d2e0",
+  "sources": [],
+  "checkpoints": {
+   "resnet50.pth": "169cea5dadfe",
+   "densenet121.pth": "7898e78117a9",
+   "vit_small.pth": "663a471e75d6"
+  },
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "n_queries": 3368,
+  "attacks": [
+   "pgd",
+   "mifgsm"
+  ],
+  "eps": [
+   16
+  ],
+  "steps": 10,
+  "ensembles": [
+   "densenet121+vit_small",
+   "resnet50+vit_small",
+   "resnet50+densenet121"
+  ]
+ },
+ "figure:defense_strength.png": {
+  "time_utc": "2026-10-16 10:44:10",
+  "git_commit": "d09d2e0",
+  "sources": [
+   "defense.json",
+   "defense_pgd50.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU"
+ },
+ "figure:ensemble_transfer_pgd_eps8.png": {
+  "time_utc": "2026-10-16 10:44:22",
+  "git_commit": "d09d2e0",
+  "sources": [
+   "attacks_evade.json",
+   "ensemble.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "attack": "pgd",
+  "eps": 8
+ },
+ "figure:ensemble_transfer_mifgsm_eps8.png": {
+  "time_utc": "2026-10-16 10:44:32",
+  "git_commit": "d09d2e0",
+  "sources": [
+   "attacks_evade.json",
+   "ensemble.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "attack": "mifgsm",
+  "eps": 8
+ },
+ "figure:ensemble_transfer_pgd_eps16.png": {
+  "time_utc": "2026-10-16 10:44:43",
+  "git_commit": "d09d2e0",
+  "sources": [
+   "attacks_evade.json",
+   "ensemble.json"
+  ],
+  "checkpoints": {},
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "attack": "pgd",
+  "eps": 16
  }
 }

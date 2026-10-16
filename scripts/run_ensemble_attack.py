@@ -12,6 +12,7 @@ python scripts/run_ensemble_attack.py --data /kaggle/input --ckpts checkpoints/r
 Same eps budget, same number of steps as the single-surrogate runs: the ensemble gets no larger perturbation, only better gradients.
 """
 import argparse, json, os, sys, time
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 import numpy as np, torch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from reidattack.data import get_market
@@ -36,7 +37,7 @@ def main():
     ap.add_argument("--attacks", nargs="+", default=["pgd", "mifgsm"], choices=["fgsm", "pgd", "mifgsm"])
     ap.add_argument("--eps", nargs="+", type=int, default=[8])
     ap.add_argument("--steps", type=int, default=10)
-    ap.add_argument("--chunk", type=int, default=32, help="crafting sub-batch size (an ensemble keeps several graphs in memory)")
+    ap.add_argument("--chunk", type=int, default=16, help="crafting sub-batch size (an ensemble keeps several graphs in memory)")
     ap.add_argument("--max_query", type=int, default=0)
     ap.add_argument("--out", default=None)
     ap.add_argument("--workers", type=int, default=2)

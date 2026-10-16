@@ -1,0 +1,74 @@
+[
+ {
+  "attack": "clean",
+  "eps": 0,
+  "source": "-",
+  "target": "resnet50",
+  "rank1": 86.94,
+  "rank5": 95.4,
+  "mAP": 70.64
+ },
+ {
+  "attack": "clean",
+  "eps": 0,
+  "source": "-",
+  "target": "resnet50_adv_trained_eps8",
+  "rank1": 74.52,
+  "rank5": 89.61,
+  "mAP": 52.29
+ },
+ {
+  "attack": "pgd",
+  "eps": 2,
+  "source": "resnet50_adv_trained_eps8",
+  "target": "resnet50",
+  "rank1": 77.02,
+  "rank5": 90.62,
+  "mAP": 58.69
+ },
+ {
+  "attack": "pgd",
+  "eps": 2,
+  "source": "resnet50_adv_trained_eps8",
+  "target": "resnet50_adv_trained_eps8",
+  "rank1": 73.34,
+  "rank5": 88.84,
+  "mAP": 52.55
+ },
+ {
+  "attack": "pgd",
+  "eps": 4,
+  "source": "resnet50_adv_trained_eps8",
+  "target": "resnet50",
+  "rank1": 54.39,
+  "rank5": 72.98,
+  "mAP": 36.91
+ },
+ {
+  "attack": "pgd",
+  "eps": 4,
+  "source": "resnet50_adv_trained_eps8",
+  "target": "resnet50_adv_trained_eps8",
+  "rank1": 67.07,
+  "rank5": 84.56,
+  "mAP": 47.63
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "source": "resnet50_adv_trained_eps8",
+  "target": "resnet50",
+  "rank1": 0.06,
+  "rank5": 0.36,
+  "mAP": 0.19
+ },
+ {
+  "attack": "pgd",
+  "eps": 16,
+  "source": "resnet50_adv_trained_eps8",
+  "target": "resnet50_adv_trained_eps8",
+  "rank1": 0.36,
+  "rank5": 0.65,
+  "mAP": 0.44
+ }
+]
