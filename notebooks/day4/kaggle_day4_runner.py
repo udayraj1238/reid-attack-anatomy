@@ -17,7 +17,7 @@ except Exception:
     pass
 
 # ------------------------------ settings ------------------------------
-DRY_RUN = True
+DRY_RUN = False
 REPO_URL = "https://github.com/udayraj1238/reid-attack-anatomy.git"
 BRANCH = "main"
 DATA = "/kaggle/input"
