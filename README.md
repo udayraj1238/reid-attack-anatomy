@@ -20,7 +20,13 @@ We also run a classification-style `logit_pgd` baseline to show the difference.
 
 ## Results are never typed in
 Every number/figure comes from `results/*.json` written by a real run; `results/MANIFEST.json` stores commit + checkpoint hashes;
-`python scripts/verify_results.py` checks everything. See `docs/RESULTS_SUMMARY.md` (auto-generated) for the current numbers.
+`python scripts/verify_results.py` checks everything. See `docs/RESULTS_SUMMARY.md` and `docs/DAY4_INTERPRETATION.md` for full numbers.
+
+### Provenance & Reproducibility Notes
+- **Manifest Key Overwrite**: In `results/MANIFEST.json`, the entry `run_ensemble:ensemble.json` was stamped with `eps: [8]` during Step 3, and subsequently overwritten with `eps: [16]` when Step 4 ran. All 39 rows for both budgets are preserved in `results/ensemble.json`.
+- **Compute Provenance**: Main baseline benchmarks were executed on Kaggle cloud instances (Tesla T4 GPU, PyTorch 2.11 / CUDA 12.8). Day-4 experiments (`defense_pgd50.json`, `defense_eps_sweep.json`, `ensemble.json`) were executed locally on an NVIDIA GeForce RTX 3050 Laptop GPU (CUDA 13.1 / cu128).
+- **Cross-Hardware Numerical Drift**: Clean ResNet-50 Rank-1 varies by ~0.03% across environments (86.97% on Tesla T4 vs. 86.94% on RTX 3050) due to CUDA floating-point reduction non-determinism.
+
 
 ## Quick start
 ```bash

@@ -366,8 +366,8 @@
   ]
  },
  "figure:defense_strength.png": {
-  "time_utc": "2026-10-16 10:44:10",
-  "git_commit": "d09d2e0",
+  "time_utc": "2026-10-16 19:23:11",
+  "git_commit": "d153566",
   "sources": [
    "defense.json",
    "defense_pgd50.json"

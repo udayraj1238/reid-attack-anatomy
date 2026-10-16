@@ -15,4 +15,6 @@ kaggle_outputs/
 scratch/
 results_dryrun/
 logs/*.txt
+logs/*.log
 log_*.txt
+Open_Live_Demo.bat
